@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bande HQ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inconsolata:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#10151b;
+    --panel:#161d25;
+    --panel-raised:#1c242e;
+    --line:#263140;
+    --text:#e7edf3;
+    --text-dim:#8ea0b3;
+    --text-faint:#57677a;
+    --amber:#f2a93b;
+    --green:#35d68a;
+    --red:#e5555f;
+    --blue:#4f9eea;
+    --purple:#b98af2;
+    --mono:'Inconsolata', ui-monospace, 'SF Mono', monospace;
+    --disp:'Space Grotesk', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--disp);min-height:100vh;}
+  button, input, select, textarea{font-family:var(--disp);}
+
+  #bh-root{max-width:1080px;margin:0 auto;}
+
+  .bh-topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:16px 24px;background:linear-gradient(180deg,#141b23,#10151b);
+    border-bottom:1px solid var(--line);flex-wrap:wrap;
+  }
+  .bh-brand{display:flex;align-items:center;gap:12px;}
+  .bh-brand-mark{
+    width:34px;height:34px;border-radius:8px;background:var(--amber);color:#1a1206;
+    font-weight:700;font-family:var(--mono);display:flex;align-items:center;justify-content:center;
+    font-size:12px;letter-spacing:-0.5px;box-shadow:0 0 0 3px rgba(242,169,59,0.15);flex-shrink:0;
+  }
+  .bh-brand-text h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.2px;}
+  .bh-name-input{
+    background:transparent;border:none;color:var(--text);font-family:var(--disp);
+    font-size:16px;font-weight:700;letter-spacing:.2px;padding:0;outline:none;width:220px;
+  }
+  .bh-name-input:focus{border-bottom:1px solid var(--amber);}
+  .bh-brand-text p{margin:0;font-size:11px;color:var(--text-dim);font-family:var(--mono);letter-spacing:.3px;}
+
+  .bh-tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;flex-wrap:wrap;}
+  .bh-tab{border:none;background:transparent;color:var(--text-dim);padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .bh-tab.active{background:var(--amber);color:#1a1206;}
+  .bh-tab:not(.active):hover{color:var(--text);}
+
+  .bh-count-pill{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--line);padding:5px 10px;border-radius:20px;background:var(--panel);white-space:nowrap;}
+  .bh-shared-note{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:8px 24px 0;display:flex;align-items:center;gap:6px;}
+  .bh-shared-note .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;}
+
+  .bh-body{padding:20px 24px 40px;}
+
+  .bh-section-title{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin:26px 0 10px;display:flex;align-items:center;gap:8px;}
+  .bh-section-title:first-child{margin-top:0;}
+  .bh-section-title::after{content:'';flex:1;height:1px;background:var(--line);}
+
+  .bh-form-panel{background:var(--panel-raised);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}
+  .bh-form-title{font-size:13px;font-weight:700;margin:0 0 14px;color:var(--text);}
+  .bh-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+  .bh-form-row.bh-2col{grid-template-columns:1fr 1fr;}
+  @media (max-width:640px){.bh-form-row{grid-template-columns:1fr;}}
+  .bh-field label{display:block;font-size:10.5px;font-family:var(--mono);color:var(--text-dim);margin-bottom:5px;letter-spacing:.3px;text-transform:uppercase;}
+  .bh-field input, .bh-field select, .bh-field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+    padding:9px 11px;border-radius:8px;font-size:13px;outline:none;
+  }
+  .bh-field textarea{resize:vertical;min-height:56px;font-family:var(--disp);}
+  .bh-field input:focus, .bh-field select:focus, .bh-field textarea:focus{border-color:var(--amber);}
+  .bh-form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+
+  .bh-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;transition:transform .08s ease, filter .12s ease;}
+  .bh-btn:active{transform:scale(0.97);}
+  .bh-btn-primary{background:var(--amber);color:#1a1206;}
+  .bh-btn-primary:hover{filter:brightness(1.08);}
+  .bh-btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--line);}
+  .bh-btn-ghost:hover{color:var(--text);border-color:#39485a;}
+  .bh-btn-danger{background:rgba(229,85,95,0.12);color:var(--red);border:1px solid rgba(229,85,95,0.35);}
+  .bh-btn-danger:hover{background:rgba(229,85,95,0.2);}
+  .bh-btn-sm{padding:6px 11px;font-size:11.5px;}
+
+  .bh-ing-row, .bh-item-row{display:grid;grid-template-columns:1fr 90px 30px;gap:8px;margin-bottom:6px;align-items:center;}
+  .bh-item-row{grid-template-columns:auto 1fr 70px 30px;}
+  .bh-chk{width:17px;height:17px;accent-color:var(--green);cursor:pointer;}
+  .bh-remove-x{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text-faint);font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .bh-remove-x:hover{color:var(--red);border-color:rgba(229,85,95,0.4);background:rgba(229,85,95,0.08);}
+
+  .bh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+  .bh-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;overflow:hidden;}
+  .bh-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,var(--text-faint));}
+  .bh-card-name{font-weight:700;font-size:15px;margin:0 0 3px;}
+  .bh-card-meta{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.6;}
+  .bh-card-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:8px;}
+
+  .bh-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-family:var(--mono);padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.3px;}
+  .bh-badge-green{background:rgba(53,214,138,0.14);color:var(--green);}
+  .bh-badge-red{background:rgba(229,85,95,0.12);color:var(--red);}
+  .bh-badge-blue{background:rgba(79,158,234,0.14);color:var(--blue);}
+  .bh-badge-purple{background:rgba(185,138,242,0.14);color:var(--purple);}
+  .bh-badge-dim{background:rgba(142,160,179,0.1);color:var(--text-dim);}
+
+  .bh-progress-row{display:flex;align-items:center;gap:8px;margin:8px 0;}
+  .bh-progress-track{flex:1;height:6px;background:#0d1218;border-radius:4px;overflow:hidden;}
+  .bh-progress-fill{height:100%;background:var(--amber);border-radius:4px;transition:width .4s ease;}
+  .bh-progress-label{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);min-width:34px;text-align:right;}
+
+  .bh-skill-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
+  .bh-skill-row:first-of-type{border-top:none;}
+
+  .bh-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-raised);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);}
+
+  .bh-empty{text-align:center;padding:40px 20px;color:var(--text-dim);border:1px dashed var(--line);border-radius:12px;}
+  .bh-empty h3{color:var(--text);margin:6px 0 6px;font-size:14px;}
+  .bh-empty p{margin:0;font-size:12.5px;}
+
+  .bh-materials-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+  .bh-mat-chip{font-family:var(--mono);font-size:10.5px;padding:4px 10px;border-radius:20px;background:var(--panel-raised);border:1px solid var(--line);color:var(--text-dim);}
+
+  .bh-craftlist-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
+  .bh-craftlist-row:first-of-type{border-top:none;}
+
+  .bh-total-row{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-size:13px;}
+  .bh-total-row:first-of-type{border-top:none;}
+  .bh-total-row .qty{font-family:var(--mono);color:var(--amber);font-weight:600;}
+
+  .bh-stock-ctrl{display:flex;align-items:center;gap:8px;}
+  .bh-stock-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .bh-stock-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .bh-stock-val{font-family:var(--mono);font-size:14px;min-width:28px;text-align:center;color:var(--text);}
+
+  ::placeholder{color:var(--text-faint);}
+
+  @media (max-width:600px){
+    .bh-body{padding:16px;}
+    .bh-name-input{width:150px;font-size:14px;}
+  }
+</style>
+</head>
+<body>
+<div id="bh-root">
+  <div class="bh-topbar">
+    <div class="bh-brand">
+      <div class="bh-brand-mark">BHQ</div>
+      <div class="bh-brand-text">
+        <input class="bh-name-input" id="gangName" value="MIN BANDE">
+        <p>FIVEM BANDESTYRING</p>
+      </div>
+    </div>
+    <div class="bh-tabs" id="bh-tabs">
+      <button class="bh-tab active" data-tab="crafting">Crafting</button>
+      <button class="bh-tab" data-tab="stoffer">Stoffer</button>
+      <button class="bh-tab" data-tab="heist">Heists</button>
+      <button class="bh-tab" data-tab="meetings">Møder</button>
+    </div>
+    <div class="bh-count-pill" id="bh-count-pill">—</div>
+  </div>
+  <div class="bh-shared-note"><span class="dot"></span>Data deles med alle der åbner dette dokument.</div>
+
+  <div class="bh-body">
+
+    <!-- CRAFTING -->
+    <div class="bh-panel" id="panel-crafting">
+      <div class="bh-section-title">Ny opskrift</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Navn på craft</label><input type="text" id="rc-name" placeholder="F.eks. Metamfetamin"></div>
+          <div class="bh-field"><label>Output pr. batch</label><input type="number" id="rc-output" value="1" min="1"></div>
+        </div>
+        <div class="bh-field"><label>Ingredienser</label><div id="rc-ingredients"></div></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="rc-add-ing" type="button">+ Tilføj ingrediens</button>
+          <button class="bh-btn bh-btn-primary" id="rc-save" type="button">Gem opskrift</button>
+        </div>
+      </div>
+
+      <div class="bh-section-title">Gemte opskrifter <span class="bh-count-pill" id="recipe-count" style="margin-left:auto;"></span></div>
+      <div id="recipe-list"></div>
+
+      <div class="bh-section-title">Craft-liste — beregn flere opskrifter samlet</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Vælg opskrift</label><select id="cl-recipe"></select></div>
+          <div class="bh-field"><label>Ønsket antal (output)</label><input type="number" id="cl-qty" value="1" min="1"></div>
+        </div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
+        </div>
+        <div id="craftlist-rows"></div>
+        <div class="bh-form-actions" style="margin-top:10px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-clear" type="button">Ryd liste</button>
+          <button class="bh-btn bh-btn-primary" id="cl-calc" type="button">Beregn total</button>
+        </div>
+      </div>
+      <div id="craftlist-total"></div>
+
+      <div class="bh-section-title">Materialer <span class="bh-count-pill" style="margin-left:auto;">Skriv i et felt for forslag</span></div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Nyt materiale</label><input type="text" id="mat-name" placeholder="F.eks. Titaniumplade"></div>
+        </div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="mat-save" type="button">Tilføj materiale</button></div>
+      </div>
+      <div class="bh-materials-wrap" id="materials-ref"></div>
+    </div>
+
+    <!-- STOFFER -->
+    <div class="bh-panel" id="panel-stoffer" style="display:none;">
+      <div class="bh-section-title">Tilføj stof</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row">
+          <div class="bh-field"><label>Navn</label><input type="text" id="dg-name" placeholder="F.eks. Kokain"></div>
+          <div class="bh-field"><label>Salgspris pr. enhed</label><input type="number" id="dg-price" min="0" step="1" placeholder="F.eks. 250"></div>
+          <div class="bh-field"><label>Output pr. batch</label><input type="number" id="dg-output" value="1" min="1"></div>
+        </div>
+        <div class="bh-field"><label>Opskrift (ingredienser)</label><div id="dg-ingredients"></div></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="dg-add-ing" type="button">+ Tilføj ingrediens</button>
+          <button class="bh-btn bh-btn-primary" id="dg-save" type="button">Tilføj stof</button>
+        </div>
+      </div>
+      <div class="bh-section-title">Lager <span class="bh-count-pill" id="drug-count" style="margin-left:auto;"></span></div>
+      <div id="drug-list" class="bh-grid"></div>
+    </div>
+
+    <!-- HEIST -->
+    <div class="bh-panel" id="panel-heist" style="display:none;">
+      <div class="bh-section-title">Nyt heist</div>
+      <div class="bh-form-panel">
+        <div class="bh-field"><label>Heist navn</label><input type="text" id="hs-name" placeholder="F.eks. Pacific Standard"></div>
+        <div class="bh-field"><label>Nødvendige items</label><div id="hs-items"></div></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="hs-add-item" type="button">+ Tilføj item</button>
+          <button class="bh-btn bh-btn-primary" id="hs-save" type="button">Gem heist</button>
+        </div>
+      </div>
+      <div class="bh-section-title">Aktive heists <span class="bh-count-pill" id="heist-count" style="margin-left:auto;"></span></div>
+      <div id="heist-list" class="bh-grid"></div>
+    </div>
+
+    <!-- MEETINGS -->
+    <div class="bh-panel" id="panel-meetings" style="display:none;">
+      <div class="bh-section-title">Planlæg møde</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row">
+          <div class="bh-field"><label>Titel</label><input type="text" id="mt-title" placeholder="F.eks. Ugentlig briefing"></div>
+          <div class="bh-field"><label>Dato</label><input type="date" id="mt-date"></div>
+          <div class="bh-field"><label>Tid</label><input type="time" id="mt-time"></div>
+        </div>
+        <div class="bh-field"><label>Dagsorden / noter</label><textarea id="mt-agenda" placeholder="Hvad skal I nå igennem?"></textarea></div>
+        <div class="bh-field"><label>Deltagere</label><input type="text" id="mt-attendees" placeholder="F.eks. Snake, Rex, Vixen"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="mt-save" type="button">Gem møde</button></div>
+      </div>
+      <div class="bh-section-title">Møder <span class="bh-count-pill" id="meeting-count" style="margin-left:auto;"></span></div>
+      <div id="meeting-list" class="bh-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<datalist id="materials-list"></datalist>
+
+<script>
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const escapeAttr = s => String(s).replace(/"/g,'&quot;');
+const escapeHtml = s => String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// ===================== Firebase Realtime Database backend =====================
+// Sæt din Firebase "Database URL" ind her (slutter typisk på firebaseio.com
+// eller firebasedatabase.app). Se FIREBASE_SETUP.md for opsætningsvejledning.
+const FIREBASE_DB_URL = 'https://bandetab-9cbcc-default-rtdb.europe-west1.firebasedatabase.app/';
+
+function firebaseUrl(key){
+  return `${FIREBASE_DB_URL.replace(/\/$/, '')}/bande-hq/${encodeURIComponent(key)}.json`;
+}
+async function safeJson(res, context){
+  if(!res.ok){
+    throw new Error(`Firebase svarede med HTTP ${res.status} (${context}). Tjek Database-reglerne (skal tillade læsning/skrivning) og at Database URL er korrekt.`);
+  }
+  const text = await res.text();
+  if(text === ''){ return null; }
+  try{ return JSON.parse(text); }
+  catch(e){ throw new Error(`Uventet svar fra Firebase ved "${context}" (ikke gyldig JSON).`); }
+}
+
+async function loadKey(key, fallback){
+  try{
+    const res = await fetch(firebaseUrl(key));
+    const value = await safeJson(res, 'hent ' + key);
+    return value === null ? fallback : value;
+  }catch(e){ console.error('Firebase fejl (load)', key, e); return fallback; }
+}
+async function saveKey(key, value){
+  try{
+    const res = await fetch(firebaseUrl(key), {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(value)
+    });
+    await safeJson(res, 'gem ' + key);
+  }catch(e){ console.error('Firebase fejl (gem)', key, e); alert('Kunne ikke gemme til Firebase. Tjek din forbindelse eller Database-regler.'); }
+}
+
+const DEFAULT_MATERIALS = ["Råt kød","Tekstil","Klude","Sterile pakke","Bandage","Plaster","Ispose","Plastik","Tørret Hash","Metalisk skrot","Fjederstål","Batteripakke","Elektronisk skrot","Ledningsrulle","Gummi","Skruer","Hærdet stål","Forstærket stål","Smørremiddel base","Opløsningsmiddel","Kredsløb","Loddepakke","Refineret jern","Skruer & bolte","Smådele","Controller","Modstand","Kondensator","Krudt","Højladet krudt","Træ","Kulfiber","Ballistisk stof","Hacking-modul","Antenne-modul","Aluminiumplade"];
+let materials = [];
+
+function renderMaterials(){
+  document.getElementById('materials-list').innerHTML = materials.map(m=>`<option value="${escapeAttr(m)}">`).join('');
+  document.getElementById('materials-ref').innerHTML = materials.map(m=>`<span class="bh-mat-chip">${escapeHtml(m)}<button type="button" class="mat-remove" data-mat="${escapeAttr(m)}" style="background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;margin-left:2px;line-height:1;">&times;</button></span>`).join('');
+  document.getElementById('materials-ref').querySelectorAll('.mat-remove').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      materials = materials.filter(m=>m !== btn.dataset.mat);
+      await saveKey('materials', materials);
+      renderMaterials();
+    });
+  });
+}
+document.getElementById('mat-save').addEventListener('click', async ()=>{
+  const input = document.getElementById('mat-name');
+  const name = input.value.trim();
+  if(!name){ alert('Skriv et navn på materialet.'); return; }
+  if(materials.includes(name)){ alert('Det materiale findes allerede.'); return; }
+  materials.push(name);
+  await saveKey('materials', materials);
+  input.value = '';
+  renderMaterials();
+});
+
+let recipes = [], heists = [], meetings = [], drugs = [];
+let craftlist = [];
+let gangName = 'MIN BANDE';
+
+// ---------- TABS ----------
+document.querySelectorAll('.bh-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.bh-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.bh-panel').forEach(x=>x.style.display='none');
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).style.display='block';
+    updateCountPill(t.dataset.tab);
+  });
+});
+function updateCountPill(tab){
+  const pill = document.getElementById('bh-count-pill');
+  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} stoffer`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  pill.textContent = map[tab] || '—';
+}
+
+const gangInput = document.getElementById('gangName');
+gangInput.addEventListener('change', async ()=>{ gangName = gangInput.value.trim() || 'MIN BANDE'; await saveKey('gangname', gangName); });
+
+// ---------- CRAFTING: recipe form ----------
+function makeIngRow(name='', qty=''){
+  const div = document.createElement('div');
+  div.className = 'bh-ing-row';
+  div.innerHTML = `<input type="text" class="ing-name" placeholder="Ressource" list="materials-list" value="${escapeAttr(name)}">
+    <input type="number" class="ing-qty" placeholder="Antal" min="0" value="${qty}">
+    <button type="button" class="bh-remove-x ing-remove">&times;</button>`;
+  div.querySelector('.ing-remove').addEventListener('click', ()=> div.remove());
+  return div;
+}
+document.getElementById('rc-add-ing').addEventListener('click', ()=> document.getElementById('rc-ingredients').appendChild(makeIngRow()));
+document.getElementById('rc-ingredients').appendChild(makeIngRow());
+
+document.getElementById('rc-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('rc-name').value.trim();
+  const output = parseFloat(document.getElementById('rc-output').value) || 1;
+  if(!name){ alert('Giv opskriften et navn.'); return; }
+  const ingredients = [];
+  document.querySelectorAll('#rc-ingredients .bh-ing-row').forEach(row=>{
+    const n = row.querySelector('.ing-name').value.trim();
+    const q = parseFloat(row.querySelector('.ing-qty').value);
+    if(n && q > 0) ingredients.push({name:n, qty:q});
+  });
+  if(ingredients.length === 0){ alert('Tilføj mindst én ingrediens.'); return; }
+  recipes.push({id:uid(), name, output, ingredients});
+  await saveKey('recipes', recipes);
+  document.getElementById('rc-name').value=''; document.getElementById('rc-output').value=1;
+  document.getElementById('rc-ingredients').innerHTML=''; document.getElementById('rc-ingredients').appendChild(makeIngRow());
+  renderRecipes();
+});
+
+function renderRecipes(){
+  const list = document.getElementById('recipe-list');
+  const select = document.getElementById('cl-recipe');
+  document.getElementById('recipe-count').textContent = recipes.length;
+  select.innerHTML = recipes.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+  if(recipes.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen opskrifter</h3><p>Tilføj en opskrift ovenfor for at komme i gang.</p></div>'; return; }
+  list.innerHTML = `<div class="bh-grid">` + recipes.map(r=>`
+    <div class="bh-card" style="--stripe:var(--amber);">
+      <p class="bh-card-name">${escapeHtml(r.name)}</p>
+      <p class="bh-card-meta">Output: ${r.output} stk/batch<br>${r.ingredients.map(i=>`${i.qty}&times; ${escapeHtml(i.name)}`).join(', ')}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
+    </div>`).join('') + `</div>`;
+  list.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      recipes = recipes.filter(r=>r.id !== btn.dataset.id);
+      craftlist = craftlist.filter(c=>c.recipeId !== btn.dataset.id);
+      await saveKey('recipes', recipes);
+      renderRecipes(); renderCraftlist();
+    });
+  });
+}
+
+// ---------- CRAFT LIST (multi-recipe totals) ----------
+document.getElementById('cl-add').addEventListener('click', ()=>{
+  const id = document.getElementById('cl-recipe').value;
+  const qty = parseFloat(document.getElementById('cl-qty').value) || 0;
+  const recipe = recipes.find(r=>r.id===id);
+  if(!recipe || qty <= 0){ alert('Vælg en opskrift og et antal.'); return; }
+  craftlist.push({recipeId:id, qty});
+  document.getElementById('cl-qty').value = 1;
+  renderCraftlist();
+});
+document.getElementById('cl-clear').addEventListener('click', ()=>{ craftlist = []; renderCraftlist(); document.getElementById('craftlist-total').innerHTML=''; });
+
+function renderCraftlist(){
+  const wrap = document.getElementById('craftlist-rows');
+  if(craftlist.length === 0){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = craftlist.map((c,idx)=>{
+    const r = recipes.find(x=>x.id===c.recipeId);
+    if(!r) return '';
+    return `<div class="bh-craftlist-row"><span>${escapeHtml(r.name)}</span><span style="display:flex;align-items:center;gap:10px;"><span class="qty" style="font-family:var(--mono);color:var(--amber);">&times;${c.qty}</span><button class="bh-remove-x" data-idx="${idx}">&times;</button></span></div>`;
+  }).join('');
+  wrap.querySelectorAll('button[data-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ craftlist.splice(parseInt(btn.dataset.idx),1); renderCraftlist(); });
+  });
+}
+
+document.getElementById('cl-calc').addEventListener('click', ()=>{
+  const out = document.getElementById('craftlist-total');
+  if(craftlist.length === 0){ out.innerHTML = '<div class="bh-empty"><h3>Tom liste</h3><p>Tilføj en eller flere opskrifter til listen først.</p></div>'; return; }
+  const totals = {};
+  craftlist.forEach(c=>{
+    const r = recipes.find(x=>x.id===c.recipeId);
+    if(!r) return;
+    const batches = c.qty / r.output;
+    r.ingredients.forEach(ing=>{
+      totals[ing.name] = (totals[ing.name] || 0) + ing.qty * batches;
+    });
+  });
+  const rows = Object.keys(totals).sort().map(name=>{
+    const total = Math.ceil(totals[name]*100)/100;
+    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+  }).join('');
+  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov</div>${rows}</div>`;
+});
+
+// ---------- STOFFER ----------
+document.getElementById('dg-add-ing').addEventListener('click', ()=> document.getElementById('dg-ingredients').appendChild(makeIngRow()));
+document.getElementById('dg-ingredients').appendChild(makeIngRow());
+
+document.getElementById('dg-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('dg-name').value.trim();
+  const price = parseFloat(document.getElementById('dg-price').value) || 0;
+  const output = parseFloat(document.getElementById('dg-output').value) || 1;
+  if(!name){ alert('Giv stoffet et navn.'); return; }
+  const ingredients = [];
+  document.querySelectorAll('#dg-ingredients .bh-ing-row').forEach(row=>{
+    const n = row.querySelector('.ing-name').value.trim();
+    const q = parseFloat(row.querySelector('.ing-qty').value);
+    if(n && q > 0) ingredients.push({name:n, qty:q});
+  });
+  drugs.push({id:uid(), name, price, output, ingredients, stock:0});
+  await saveKey('drugs', drugs);
+  document.getElementById('dg-name').value=''; document.getElementById('dg-price').value=''; document.getElementById('dg-output').value='1';
+  document.getElementById('dg-ingredients').innerHTML=''; document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  renderDrugs();
+});
+
+async function adjustStock(id, delta){
+  const d = drugs.find(x=>x.id===id);
+  if(!d) return;
+  d.stock = Math.max(0, d.stock + delta);
+  await saveKey('drugs', drugs);
+  renderDrugs();
+}
+
+function renderDrugs(){
+  const list = document.getElementById('drug-list');
+  document.getElementById('drug-count').textContent = drugs.length;
+  if(drugs.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen stoffer</h3><p>Tilføj jeres første vare ovenfor.</p></div>'; return; }
+  const fmt = n => new Intl.NumberFormat('da-DK').format(n);
+  list.innerHTML = drugs.map(d=>{
+    const total = d.price * d.stock;
+    const recipeText = (d.ingredients && d.ingredients.length) ? d.ingredients.map(i=>`${i.qty}&times; ${escapeHtml(i.name)}`).join(', ') : 'Ingen opskrift angivet';
+    return `<div class="bh-card" style="--stripe:var(--purple);">
+      <p class="bh-card-name">${escapeHtml(d.name)}</p>
+      <p class="bh-card-meta">${fmt(d.price)} kr/stk &middot; lagerværdi ${fmt(total)} kr</p>
+      <p class="bh-card-meta">Opskrift (${d.output || 1} stk/batch): ${recipeText}</p>
+      <div class="bh-stock-ctrl">
+        <button class="bh-stock-btn" data-id="${d.id}" data-delta="-1">&minus;</button>
+        <span class="bh-stock-val">${d.stock}</span>
+        <button class="bh-stock-btn" data-id="${d.id}" data-delta="1">+</button>
+        <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-left:4px;">på lager</span>
+      </div>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.bh-stock-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> adjustStock(btn.dataset.id, parseInt(btn.dataset.delta)));
+  });
+  list.querySelectorAll('button[data-del]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ drugs = drugs.filter(d=>d.id !== btn.dataset.del); await saveKey('drugs', drugs); renderDrugs(); });
+  });
+}
+
+// ---------- HEIST ----------
+function makeItemRow(name='', qty=1, gathered=false){
+  const div = document.createElement('div');
+  div.className = 'bh-item-row';
+  div.innerHTML = `<input type="checkbox" class="bh-chk item-gathered" ${gathered?'checked':''}>
+    <input type="text" class="item-name" placeholder="Item" value="${escapeAttr(name)}">
+    <input type="number" class="item-qty" placeholder="Antal" min="1" value="${qty}">
+    <button type="button" class="bh-remove-x item-remove">&times;</button>`;
+  div.querySelector('.item-remove').addEventListener('click', ()=> div.remove());
+  return div;
+}
+document.getElementById('hs-add-item').addEventListener('click', ()=> document.getElementById('hs-items').appendChild(makeItemRow()));
+document.getElementById('hs-items').appendChild(makeItemRow());
+
+document.getElementById('hs-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('hs-name').value.trim();
+  if(!name){ alert('Giv heistet et navn.'); return; }
+  const items = [];
+  document.querySelectorAll('#hs-items .bh-item-row').forEach(row=>{
+    const n = row.querySelector('.item-name').value.trim();
+    const q = parseInt(row.querySelector('.item-qty').value) || 1;
+    const g = row.querySelector('.item-gathered').checked;
+    if(n) items.push({name:n, qty:q, gathered:g});
+  });
+  if(items.length === 0){ alert('Tilføj mindst ét item.'); return; }
+  heists.push({id:uid(), name, items});
+  await saveKey('heists', heists);
+  document.getElementById('hs-name').value=''; document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
+  renderHeists();
+});
+
+function renderHeists(){
+  const list = document.getElementById('heist-list');
+  document.getElementById('heist-count').textContent = heists.length;
+  if(heists.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen heists</h3><p>Planlæg dit første heist ovenfor.</p></div>'; return; }
+  list.innerHTML = heists.map(h=>{
+    const done = h.items.filter(i=>i.gathered).length;
+    const pct = Math.round((done / h.items.length) * 100);
+    return `<div class="bh-card" style="--stripe:var(--blue);">
+      <p class="bh-card-name">${escapeHtml(h.name)}</p>
+      <p class="bh-card-meta">${done}/${h.items.length} items klar</p>
+      ${h.items.map((it,idx)=>`<div class="bh-skill-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;"><input type="checkbox" class="bh-chk hs-toggle" data-hid="${h.id}" data-idx="${idx}" ${it.gathered?'checked':''}><span style="${it.gathered?'color:var(--green);text-decoration:line-through;':''}">${escapeHtml(it.name)}</span></label><span style="font-family:var(--mono);color:var(--text-dim);">&times;${it.qty}</span></div>`).join('')}
+      <div class="bh-progress-row"><div class="bh-progress-track"><div class="bh-progress-fill" style="width:${pct}%;"></div></div><div class="bh-progress-label">${pct}%</div></div>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm hs-delete" data-hid="${h.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.hs-toggle').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const h = heists.find(x=>x.id===cb.dataset.hid);
+      h.items[parseInt(cb.dataset.idx)].gathered = cb.checked;
+      await saveKey('heists', heists); renderHeists();
+    });
+  });
+  list.querySelectorAll('.hs-delete').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); });
+  });
+}
+
+// ---------- MEETINGS ----------
+document.getElementById('mt-save').addEventListener('click', async ()=>{
+  const title = document.getElementById('mt-title').value.trim();
+  const date = document.getElementById('mt-date').value;
+  const time = document.getElementById('mt-time').value;
+  const agenda = document.getElementById('mt-agenda').value.trim();
+  const attendees = document.getElementById('mt-attendees').value.trim();
+  if(!title || !date){ alert('Giv mødet en titel og en dato.'); return; }
+  meetings.push({id:uid(), title, date, time, agenda, attendees});
+  meetings.sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  await saveKey('meetings', meetings);
+  document.getElementById('mt-title').value=''; document.getElementById('mt-date').value=''; document.getElementById('mt-time').value=''; document.getElementById('mt-agenda').value=''; document.getElementById('mt-attendees').value='';
+  renderMeetings();
+});
+function renderMeetings(){
+  const list = document.getElementById('meeting-list');
+  document.getElementById('meeting-count').textContent = meetings.length;
+  if(meetings.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen møder</h3><p>Planlæg jeres første møde ovenfor.</p></div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  list.innerHTML = meetings.map(m=>`
+    <div class="bh-card" style="--stripe:var(--purple);">
+      <p class="bh-card-name">${escapeHtml(m.title)}</p>
+      <p class="bh-card-meta">${m.date}${m.time ? ' · ' + m.time : ''}</p>
+      ${m.date < today ? '<span class="bh-badge bh-badge-dim">Afholdt</span>' : '<span class="bh-badge bh-badge-purple">Kommende</span>'}
+      ${m.agenda ? `<p class="bh-card-meta" style="margin-top:8px;white-space:pre-wrap;">${escapeHtml(m.agenda)}</p>` : ''}
+      ${m.attendees ? `<p class="bh-card-meta">Deltagere: ${escapeHtml(m.attendees)}</p>` : ''}
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${m.id}">Slet</button></div>
+    </div>`).join('');
+  list.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ meetings = meetings.filter(m=>m.id !== btn.dataset.id); await saveKey('meetings', meetings); renderMeetings(); });
+  });
+}
+
+// ---------- INIT ----------
+(async function init(){
+  if(!FIREBASE_DB_URL || FIREBASE_DB_URL.indexOf('http') !== 0){
+    document.getElementById('bh-root').innerHTML = `
+      <div class="bh-body">
+        <div class="bh-empty" style="text-align:left;padding:24px;">
+          <h3>Opsætning mangler</h3>
+          <p style="margin-bottom:10px;">Denne app skal forbindes til en Firebase Realtime Database, før den kan gemme data.</p>
+          <p style="margin-bottom:10px;">Find linjen <code style="color:var(--amber);">const FIREBASE_DB_URL = '...'</code> øverst i filens kode, og sæt din Firebase "Database URL" ind der (se FIREBASE_SETUP.md for vejledning).</p>
+          <p>Gem filen igen, og genindlæs siden.</p>
+        </div>
+      </div>`;
+    return;
+  }
+  try{
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Tidsudløb: Firebase svarede ikke inden for 15 sekunder. Tjek din internetforbindelse, eller at Database URL er korrekt.')), 15000));
+    await Promise.race([
+      (async ()=>{
+        gangName = await loadKey('gangname', 'MIN BANDE'); gangInput.value = gangName;
+        recipes = await loadKey('recipes', []);
+        heists = await loadKey('heists', []);
+        meetings = await loadKey('meetings', []);
+        drugs = await loadKey('drugs', []);
+        materials = await loadKey('materials', DEFAULT_MATERIALS.slice());
+      })(),
+      timeout
+    ]);
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials();
+    updateCountPill('crafting');
+  }catch(err){
+    document.getElementById('bh-root').innerHTML = `
+      <div class="bh-body">
+        <div class="bh-empty" style="text-align:left;padding:24px;">
+          <h3>Kunne ikke forbinde til Firebase</h3>
+          <p style="margin-bottom:10px;">Tjek at FIREBASE_DB_URL er korrekt, og at Database-reglerne ("Rules") tillader læsning og skrivning.</p>
+          <p style="font-family:var(--mono);font-size:12px;background:#0d1218;padding:10px;border-radius:8px;overflow-wrap:break-word;">${escapeHtml(String(err && err.message || err))}</p>
+          <button class="bh-btn bh-btn-primary" id="bh-retry-init" style="margin-top:12px;">Prøv igen</button>
+        </div>
+      </div>`;
+    document.getElementById('bh-retry-init').addEventListener('click', ()=> location.reload());
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>
