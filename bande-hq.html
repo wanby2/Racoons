@@ -177,6 +177,7 @@
         <div class="bh-field"><label>Ingredienser</label><div id="rc-ingredients"></div></div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="rc-add-ing" type="button">+ Tilføj ingrediens</button>
+          <button class="bh-btn bh-btn-ghost" id="rc-cancel" type="button" style="display:none;">Annullér redigering</button>
           <button class="bh-btn bh-btn-primary" id="rc-save" type="button">Gem opskrift</button>
         </div>
       </div>
@@ -223,6 +224,7 @@
         <div class="bh-field"><label>Opskrift (ingredienser)</label><div id="dg-ingredients"></div></div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="dg-add-ing" type="button">+ Tilføj ingrediens</button>
+          <button class="bh-btn bh-btn-ghost" id="dg-cancel" type="button" style="display:none;">Annullér redigering</button>
           <button class="bh-btn bh-btn-primary" id="dg-save" type="button">Tilføj stof</button>
         </div>
       </div>
@@ -369,6 +371,29 @@ function makeIngRow(name='', qty=''){
 document.getElementById('rc-add-ing').addEventListener('click', ()=> document.getElementById('rc-ingredients').appendChild(makeIngRow()));
 document.getElementById('rc-ingredients').appendChild(makeIngRow());
 
+let editingRecipeId = null;
+function resetRecipeForm(){
+  editingRecipeId = null;
+  document.getElementById('rc-name').value=''; document.getElementById('rc-output').value=1;
+  document.getElementById('rc-ingredients').innerHTML=''; document.getElementById('rc-ingredients').appendChild(makeIngRow());
+  document.getElementById('rc-save').textContent = 'Gem opskrift';
+  document.getElementById('rc-cancel').style.display = 'none';
+}
+document.getElementById('rc-cancel').addEventListener('click', resetRecipeForm);
+
+function startEditRecipe(id){
+  const r = recipes.find(x=>x.id===id);
+  if(!r) return;
+  editingRecipeId = id;
+  document.getElementById('rc-name').value = r.name;
+  document.getElementById('rc-output').value = r.output;
+  document.getElementById('rc-ingredients').innerHTML = '';
+  r.ingredients.forEach(i=> document.getElementById('rc-ingredients').appendChild(makeIngRow(i.name, i.qty)));
+  document.getElementById('rc-save').textContent = 'Opdatér opskrift';
+  document.getElementById('rc-cancel').style.display = 'inline-flex';
+  document.getElementById('rc-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
 document.getElementById('rc-save').addEventListener('click', async ()=>{
   const name = document.getElementById('rc-name').value.trim();
   const output = parseFloat(document.getElementById('rc-output').value) || 1;
@@ -380,10 +405,14 @@ document.getElementById('rc-save').addEventListener('click', async ()=>{
     if(n && q > 0) ingredients.push({name:n, qty:q});
   });
   if(ingredients.length === 0){ alert('Tilføj mindst én ingrediens.'); return; }
-  recipes.push({id:uid(), name, output, ingredients});
+  if(editingRecipeId){
+    const r = recipes.find(x=>x.id===editingRecipeId);
+    if(r){ r.name = name; r.output = output; r.ingredients = ingredients; }
+  } else {
+    recipes.push({id:uid(), name, output, ingredients});
+  }
   await saveKey('recipes', recipes);
-  document.getElementById('rc-name').value=''; document.getElementById('rc-output').value=1;
-  document.getElementById('rc-ingredients').innerHTML=''; document.getElementById('rc-ingredients').appendChild(makeIngRow());
+  resetRecipeForm();
   renderRecipes();
 });
 
@@ -397,13 +426,17 @@ function renderRecipes(){
     <div class="bh-card" style="--stripe:var(--amber);">
       <p class="bh-card-name">${escapeHtml(r.name)}</p>
       <p class="bh-card-meta">Output: ${r.output} stk/batch<br>${r.ingredients.map(i=>`${i.qty}&times; ${escapeHtml(i.name)}`).join(', ')}</p>
-      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${r.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
     </div>`).join('') + `</div>`;
+  list.querySelectorAll('button[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> startEditRecipe(btn.dataset.edit));
+  });
   list.querySelectorAll('button[data-id]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       recipes = recipes.filter(r=>r.id !== btn.dataset.id);
       craftlist = craftlist.filter(c=>c.recipeId !== btn.dataset.id);
       await saveKey('recipes', recipes);
+      if(editingRecipeId === btn.dataset.id) resetRecipeForm();
       renderRecipes(); renderCraftlist();
     });
   });
@@ -457,6 +490,31 @@ document.getElementById('cl-calc').addEventListener('click', ()=>{
 document.getElementById('dg-add-ing').addEventListener('click', ()=> document.getElementById('dg-ingredients').appendChild(makeIngRow()));
 document.getElementById('dg-ingredients').appendChild(makeIngRow());
 
+let editingDrugId = null;
+function resetDrugForm(){
+  editingDrugId = null;
+  document.getElementById('dg-name').value=''; document.getElementById('dg-price').value=''; document.getElementById('dg-output').value='1';
+  document.getElementById('dg-ingredients').innerHTML=''; document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  document.getElementById('dg-save').textContent = 'Tilføj stof';
+  document.getElementById('dg-cancel').style.display = 'none';
+}
+document.getElementById('dg-cancel').addEventListener('click', resetDrugForm);
+
+function startEditDrug(id){
+  const d = drugs.find(x=>x.id===id);
+  if(!d) return;
+  editingDrugId = id;
+  document.getElementById('dg-name').value = d.name;
+  document.getElementById('dg-price').value = d.price;
+  document.getElementById('dg-output').value = d.output || 1;
+  document.getElementById('dg-ingredients').innerHTML = '';
+  (d.ingredients || []).forEach(i=> document.getElementById('dg-ingredients').appendChild(makeIngRow(i.name, i.qty)));
+  if(!d.ingredients || d.ingredients.length === 0) document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  document.getElementById('dg-save').textContent = 'Opdatér stof';
+  document.getElementById('dg-cancel').style.display = 'inline-flex';
+  document.getElementById('dg-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
 document.getElementById('dg-save').addEventListener('click', async ()=>{
   const name = document.getElementById('dg-name').value.trim();
   const price = parseFloat(document.getElementById('dg-price').value) || 0;
@@ -468,10 +526,14 @@ document.getElementById('dg-save').addEventListener('click', async ()=>{
     const q = parseFloat(row.querySelector('.ing-qty').value);
     if(n && q > 0) ingredients.push({name:n, qty:q});
   });
-  drugs.push({id:uid(), name, price, output, ingredients, stock:0});
+  if(editingDrugId){
+    const d = drugs.find(x=>x.id===editingDrugId);
+    if(d){ d.name = name; d.price = price; d.output = output; d.ingredients = ingredients; }
+  } else {
+    drugs.push({id:uid(), name, price, output, ingredients, stock:0});
+  }
   await saveKey('drugs', drugs);
-  document.getElementById('dg-name').value=''; document.getElementById('dg-price').value=''; document.getElementById('dg-output').value='1';
-  document.getElementById('dg-ingredients').innerHTML=''; document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  resetDrugForm();
   renderDrugs();
 });
 
@@ -501,14 +563,22 @@ function renderDrugs(){
         <button class="bh-stock-btn" data-id="${d.id}" data-delta="1">+</button>
         <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-left:4px;">på lager</span>
       </div>
-      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${d.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
     </div>`;
   }).join('');
   list.querySelectorAll('.bh-stock-btn').forEach(btn=>{
     btn.addEventListener('click', ()=> adjustStock(btn.dataset.id, parseInt(btn.dataset.delta)));
   });
+  list.querySelectorAll('button[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> startEditDrug(btn.dataset.edit));
+  });
   list.querySelectorAll('button[data-del]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ drugs = drugs.filter(d=>d.id !== btn.dataset.del); await saveKey('drugs', drugs); renderDrugs(); });
+    btn.addEventListener('click', async ()=>{
+      drugs = drugs.filter(d=>d.id !== btn.dataset.del);
+      await saveKey('drugs', drugs);
+      if(editingDrugId === btn.dataset.del) resetDrugForm();
+      renderDrugs();
+    });
   });
 }
 
