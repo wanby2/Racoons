@@ -209,6 +209,38 @@
 
   ::placeholder{color:var(--text-faint);}
 
+  #bh-lock{
+    position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,169,59,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,158,234,0.07), transparent 55%),
+      var(--bg);
+    padding:20px;
+  }
+  #bh-lock.bh-hidden{display:none;}
+  .bh-lock-box{
+    width:100%;max-width:320px;text-align:center;background:var(--panel-raised);
+    border:1px solid var(--line);border-radius:14px;padding:32px 26px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,0.8);
+  }
+  .bh-lock-title{font-size:16px;font-weight:700;margin:2px 0 4px;}
+  .bh-lock-sub{font-size:12px;color:var(--text-dim);margin:0 0 18px;font-family:var(--mono);}
+  #bh-lock-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+    padding:11px 13px;border-radius:8px;font-size:14px;outline:none;text-align:center;letter-spacing:1px;
+    transition:border-color .16s ease, box-shadow .16s ease;
+  }
+  #bh-lock-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(242,169,59,0.14);}
+  .bh-lock-error{color:var(--red);font-size:12px;font-family:var(--mono);min-height:16px;margin:10px 0 0;}
+  .bh-lock-box.bh-shake{animation:bh-shake .35s ease;}
+  @keyframes bh-shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px);}
+    40%{transform:translateX(7px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(4px);}
+  }
+
   @media (max-width:600px){
     .bh-body{padding:16px;}
     .bh-name-input{width:150px;font-size:14px;}
@@ -216,6 +248,16 @@
 </style>
 </head>
 <body>
+<div id="bh-lock">
+  <div class="bh-lock-box">
+    <div class="bh-brand-mark" style="width:44px;height:44px;font-size:14px;margin:0 auto 14px;">BHQ</div>
+    <div class="bh-lock-title">Bande HQ er låst</div>
+    <p class="bh-lock-sub">Indtast koden for at få adgang</p>
+    <input type="password" id="bh-lock-input" placeholder="Kode" autocomplete="off">
+    <button class="bh-btn bh-btn-primary" id="bh-lock-submit" type="button" style="width:100%;justify-content:center;margin-top:10px;">Lås op</button>
+    <p class="bh-lock-error" id="bh-lock-error"></p>
+  </div>
+</div>
 <div id="bh-root">
   <div class="bh-topbar">
     <div class="bh-brand">
@@ -1289,7 +1331,7 @@ function renderMeetings(){
 }
 
 // ---------- INIT ----------
-(async function init(){
+async function init(){
   if(!FIREBASE_DB_URL || FIREBASE_DB_URL.indexOf('http') !== 0){
     document.getElementById('bh-root').innerHTML = `
       <div class="bh-body">
@@ -1333,6 +1375,41 @@ function renderMeetings(){
     document.getElementById('bh-retry-init').addEventListener('click', ()=> location.reload());
     console.error(err);
   }
+}
+
+// ---------- LÅS (adgangskode) ----------
+const ACCESS_CODE = 'Racoons1234';
+const LOCK_STORAGE_KEY = 'bh-unlocked';
+
+function unlockApp(){
+  document.getElementById('bh-lock').classList.add('bh-hidden');
+  init();
+}
+
+(function initLock(){
+  if(localStorage.getItem(LOCK_STORAGE_KEY) === '1'){
+    unlockApp();
+    return;
+  }
+  const input = document.getElementById('bh-lock-input');
+  const submit = document.getElementById('bh-lock-submit');
+  const errorEl = document.getElementById('bh-lock-error');
+  const box = document.querySelector('.bh-lock-box');
+
+  function attempt(){
+    if(input.value === ACCESS_CODE){
+      localStorage.setItem(LOCK_STORAGE_KEY, '1');
+      unlockApp();
+    } else {
+      errorEl.textContent = 'Forkert kode — prøv igen.';
+      box.classList.remove('bh-shake'); void box.offsetWidth; box.classList.add('bh-shake');
+      input.value = '';
+      input.focus();
+    }
+  }
+  submit.addEventListener('click', attempt);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') attempt(); });
+  input.focus();
 })();
 </script>
 </body>
