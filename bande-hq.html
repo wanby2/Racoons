@@ -136,6 +136,18 @@
   .bh-stock-btn:hover{border-color:var(--amber);color:var(--amber);}
   .bh-stock-val{font-family:var(--mono);font-size:14px;min-width:28px;text-align:center;color:var(--text);}
 
+  .bh-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .bh-cal-wd{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-align:center;padding:4px 0;letter-spacing:.3px;text-transform:uppercase;}
+  .bh-cal-day{position:relative;aspect-ratio:1/1;min-height:38px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);cursor:pointer;}
+  .bh-cal-day.bh-cal-empty{border:none;background:transparent;cursor:default;}
+  .bh-cal-day.bh-cal-today{border-color:var(--amber);color:var(--text);}
+  .bh-cal-day.bh-cal-has{background:rgba(242,169,59,0.1);border-color:rgba(242,169,59,0.4);color:var(--text);font-weight:600;}
+  .bh-cal-day.bh-cal-selected{outline:2px solid var(--amber);}
+  .bh-cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);position:absolute;bottom:5px;}
+  .bh-cal-day .dot.st-green{background:var(--green);}
+  .bh-cal-day .dot.st-red{background:var(--red);}
+  .bh-cal-day:hover:not(.bh-cal-empty){border-color:var(--amber);}
+
   ::placeholder{color:var(--text-faint);}
 
   @media (max-width:600px){
@@ -168,6 +180,26 @@
 
     <!-- CRAFTING -->
     <div class="bh-panel" id="panel-crafting">
+      <div class="bh-section-title">Craft-liste — beregn flere opskrifter samlet</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Vælg opskrift</label>
+            <input type="text" id="cl-search" placeholder="Søg opskrift..." style="margin-bottom:6px;">
+            <select id="cl-recipe"></select>
+          </div>
+          <div class="bh-field"><label>Ønsket antal (output)</label><input type="number" id="cl-qty" value="1" min="1"></div>
+        </div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
+        </div>
+        <div id="craftlist-rows"></div>
+        <div class="bh-form-actions" style="margin-top:10px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-clear" type="button">Ryd liste</button>
+          <button class="bh-btn bh-btn-primary" id="cl-calc" type="button">Beregn total</button>
+        </div>
+      </div>
+      <div id="craftlist-total"></div>
+
       <div class="bh-section-title">Ny opskrift</div>
       <div class="bh-form-panel">
         <div class="bh-form-row bh-2col">
@@ -183,24 +215,8 @@
       </div>
 
       <div class="bh-section-title">Gemte opskrifter <span class="bh-count-pill" id="recipe-count" style="margin-left:auto;"></span></div>
+      <div class="bh-field" style="margin-bottom:10px;"><input type="text" id="recipe-search" placeholder="Søg efter opskrift eller ingrediens..."></div>
       <div id="recipe-list"></div>
-
-      <div class="bh-section-title">Craft-liste — beregn flere opskrifter samlet</div>
-      <div class="bh-form-panel">
-        <div class="bh-form-row bh-2col">
-          <div class="bh-field"><label>Vælg opskrift</label><select id="cl-recipe"></select></div>
-          <div class="bh-field"><label>Ønsket antal (output)</label><input type="number" id="cl-qty" value="1" min="1"></div>
-        </div>
-        <div class="bh-form-actions">
-          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
-        </div>
-        <div id="craftlist-rows"></div>
-        <div class="bh-form-actions" style="margin-top:10px;">
-          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-clear" type="button">Ryd liste</button>
-          <button class="bh-btn bh-btn-primary" id="cl-calc" type="button">Beregn total</button>
-        </div>
-      </div>
-      <div id="craftlist-total"></div>
 
       <div class="bh-section-title">Materialer <span class="bh-count-pill" style="margin-left:auto;">Skriv i et felt for forslag</span></div>
       <div class="bh-form-panel">
@@ -234,9 +250,53 @@
 
     <!-- HEIST -->
     <div class="bh-panel" id="panel-heist" style="display:none;">
-      <div class="bh-section-title">Nyt heist</div>
+      <div class="bh-section-title">Heist-kalender</div>
+      <div class="bh-form-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cal-prev" type="button">&larr;</button>
+          <div class="bh-form-title" id="cal-label" style="margin:0;"></div>
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cal-next" type="button">&rarr;</button>
+        </div>
+        <div id="cal-grid"></div>
+      </div>
+      <div id="cal-day-detail"></div>
+
+      <div class="bh-section-title">Tilgængelighed — hvornår kan folk?</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row">
+          <div class="bh-field"><label>Navn</label><input type="text" id="av-name" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Dato</label><input type="date" id="av-date"></div>
+        </div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Fra</label><input type="time" id="av-from"></div>
+          <div class="bh-field"><label>Til</label><input type="time" id="av-to"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="av-note" placeholder="F.eks. Kun hvis det er Pacific Standard"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="av-save" type="button">Tilføj tid</button></div>
+      </div>
+      <div id="avail-wrap"></div>
+
+      <div class="bh-section-title">Planlæg heist</div>
       <div class="bh-form-panel">
         <div class="bh-field"><label>Heist navn</label><input type="text" id="hs-name" placeholder="F.eks. Pacific Standard"></div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Dato (valgfri)</label><input type="date" id="hs-date"></div>
+          <div class="bh-field"><label>Tid (valgfri)</label><input type="time" id="hs-time"></div>
+        </div>
+        <div class="bh-form-actions" style="margin-top:-4px;margin-bottom:6px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="hs-suggest" type="button">Foreslå bedste dato</button>
+        </div>
+        <div id="hs-suggest-result"></div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Besætning (valgfri)</label><input type="text" id="hs-crew" placeholder="F.eks. Snake, Rex, Vixen"></div>
+          <div class="bh-field"><label>Status</label>
+            <select id="hs-status">
+              <option value="planlagt">Planlagt</option>
+              <option value="gennemført">Gennemført</option>
+              <option value="aflyst">Aflyst</option>
+            </select>
+          </div>
+        </div>
         <div class="bh-field"><label>Nødvendige items</label><div id="hs-items"></div></div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="hs-add-item" type="button">+ Tilføj item</button>
@@ -268,6 +328,7 @@
 </div>
 
 <datalist id="materials-list"></datalist>
+<datalist id="components-list"></datalist>
 
 <script>
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -313,8 +374,15 @@ async function saveKey(key, value){
 const DEFAULT_MATERIALS = ["Råt kød","Tekstil","Klude","Sterile pakke","Bandage","Plaster","Ispose","Plastik","Tørret Hash","Metalisk skrot","Fjederstål","Batteripakke","Elektronisk skrot","Ledningsrulle","Gummi","Skruer","Hærdet stål","Forstærket stål","Smørremiddel base","Opløsningsmiddel","Kredsløb","Loddepakke","Refineret jern","Skruer & bolte","Smådele","Controller","Modstand","Kondensator","Krudt","Højladet krudt","Træ","Kulfiber","Ballistisk stof","Hacking-modul","Antenne-modul","Aluminiumplade"];
 let materials = [];
 
+function refreshComponentsList(){
+  const names = new Set(materials);
+  recipes.forEach(r => names.add(r.name));
+  document.getElementById('components-list').innerHTML = [...names].sort().map(m=>`<option value="${escapeAttr(m)}">`).join('');
+}
+
 function renderMaterials(){
   document.getElementById('materials-list').innerHTML = materials.map(m=>`<option value="${escapeAttr(m)}">`).join('');
+  refreshComponentsList();
   document.getElementById('materials-ref').innerHTML = materials.map(m=>`<span class="bh-mat-chip">${escapeHtml(m)}<button type="button" class="mat-remove" data-mat="${escapeAttr(m)}" style="background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;margin-left:2px;line-height:1;">&times;</button></span>`).join('');
   document.getElementById('materials-ref').querySelectorAll('.mat-remove').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -362,7 +430,7 @@ gangInput.addEventListener('change', async ()=>{ gangName = gangInput.value.trim
 function makeIngRow(name='', qty=''){
   const div = document.createElement('div');
   div.className = 'bh-ing-row';
-  div.innerHTML = `<input type="text" class="ing-name" placeholder="Ressource" list="materials-list" value="${escapeAttr(name)}">
+  div.innerHTML = `<input type="text" class="ing-name" placeholder="Ressource eller opskrift (f.eks. Slæde)" list="components-list" value="${escapeAttr(name)}">
     <input type="number" class="ing-qty" placeholder="Antal" min="0" value="${qty}">
     <button type="button" class="bh-remove-x ing-remove">&times;</button>`;
   div.querySelector('.ing-remove').addEventListener('click', ()=> div.remove());
@@ -416,16 +484,37 @@ document.getElementById('rc-save').addEventListener('click', async ()=>{
   renderRecipes();
 });
 
+function renderRecipeSelect(){
+  const select = document.getElementById('cl-recipe');
+  const prevValue = select.value;
+  const query = (document.getElementById('cl-search').value || '').trim().toLowerCase();
+  const filtered = query ? recipes.filter(r => r.name.toLowerCase().includes(query)) : recipes;
+  select.innerHTML = filtered.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+  if(filtered.some(r=>r.id === prevValue)) select.value = prevValue;
+}
+document.getElementById('cl-search').addEventListener('input', renderRecipeSelect);
+
 function renderRecipes(){
   const list = document.getElementById('recipe-list');
-  const select = document.getElementById('cl-recipe');
   document.getElementById('recipe-count').textContent = recipes.length;
-  select.innerHTML = recipes.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+  renderRecipeSelect();
+  refreshComponentsList();
+
+  const query = (document.getElementById('recipe-search').value || '').trim().toLowerCase();
+  const filtered = query
+    ? recipes.filter(r => r.name.toLowerCase().includes(query) || r.ingredients.some(i => i.name.toLowerCase().includes(query)))
+    : recipes;
+
   if(recipes.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen opskrifter</h3><p>Tilføj en opskrift ovenfor for at komme i gang.</p></div>'; return; }
-  list.innerHTML = `<div class="bh-grid">` + recipes.map(r=>`
+  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen opskrifter matcher "${escapeHtml(query)}".</p></div>`; return; }
+
+  list.innerHTML = `<div class="bh-grid">` + filtered.map(r=>`
     <div class="bh-card" style="--stripe:var(--amber);">
       <p class="bh-card-name">${escapeHtml(r.name)}</p>
-      <p class="bh-card-meta">Output: ${r.output} stk/batch<br>${r.ingredients.map(i=>`${i.qty}&times; ${escapeHtml(i.name)}`).join(', ')}</p>
+      <p class="bh-card-meta">Output: ${r.output} stk/batch<br>${r.ingredients.map(i=>{
+        const isSub = !!findRecipeByName(i.name);
+        return `${i.qty}&times; ${escapeHtml(i.name)}${isSub ? ' <span style="color:var(--amber);">(opskrift)</span>' : ''}`;
+      }).join(', ')}</p>
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${r.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
     </div>`).join('') + `</div>`;
   list.querySelectorAll('button[data-edit]').forEach(btn=>{
@@ -441,6 +530,7 @@ function renderRecipes(){
     });
   });
 }
+document.getElementById('recipe-search').addEventListener('input', renderRecipes);
 
 // ---------- CRAFT LIST (multi-recipe totals) ----------
 document.getElementById('cl-add').addEventListener('click', ()=>{
@@ -467,23 +557,54 @@ function renderCraftlist(){
   });
 }
 
+function findRecipeByName(name){
+  const n = name.trim().toLowerCase();
+  return recipes.find(r => r.name.trim().toLowerCase() === n);
+}
+
+// Recursively expands an ingredient into raw materials by following sub-recipes
+// that share a name with an existing recipe. Also tracks which sub-recipes were
+// expanded (and how many of each were needed) so we can show that separately.
+function expandIngredient(name, qtyNeeded, totals, subcomponents, visited){
+  const subRecipe = findRecipeByName(name);
+  if(!subRecipe || visited.has(subRecipe.id)){
+    // Either a raw material, or a circular reference we refuse to follow further —
+    // in the circular case we just count it as-is to avoid an infinite loop.
+    totals[name] = (totals[name] || 0) + qtyNeeded;
+    return;
+  }
+  subcomponents[subRecipe.name] = (subcomponents[subRecipe.name] || 0) + qtyNeeded;
+  const batches = qtyNeeded / subRecipe.output;
+  const nextVisited = new Set(visited); nextVisited.add(subRecipe.id);
+  subRecipe.ingredients.forEach(ing=>{
+    expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, nextVisited);
+  });
+}
+
 document.getElementById('cl-calc').addEventListener('click', ()=>{
   const out = document.getElementById('craftlist-total');
   if(craftlist.length === 0){ out.innerHTML = '<div class="bh-empty"><h3>Tom liste</h3><p>Tilføj en eller flere opskrifter til listen først.</p></div>'; return; }
   const totals = {};
+  const subcomponents = {};
   craftlist.forEach(c=>{
     const r = recipes.find(x=>x.id===c.recipeId);
     if(!r) return;
     const batches = c.qty / r.output;
+    const visited = new Set([r.id]);
     r.ingredients.forEach(ing=>{
-      totals[ing.name] = (totals[ing.name] || 0) + ing.qty * batches;
+      expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, visited);
     });
   });
   const rows = Object.keys(totals).sort().map(name=>{
     const total = Math.ceil(totals[name]*100)/100;
     return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
   }).join('');
-  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov</div>${rows}</div>`;
+  const subRows = Object.keys(subcomponents).sort().map(name=>{
+    const total = Math.ceil(subcomponents[name]*100)/100;
+    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+  }).join('');
+  const subBlock = subRows ? `<div class="bh-form-panel" style="margin-top:10px;"><div class="bh-form-title">Delkomponenter der skal craftes undervejs</div>${subRows}</div>` : '';
+  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov (rå materialer)</div>${rows}</div>${subBlock}`;
 });
 
 // ---------- STOFFER ----------
@@ -582,6 +703,195 @@ function renderDrugs(){
   });
 }
 
+// ---------- HEIST-KALENDER ----------
+let calViewYear, calViewMonth, calSelectedDate = null;
+(function initCalDate(){ const n = new Date(); calViewYear = n.getFullYear(); calViewMonth = n.getMonth(); })();
+
+const MONTHS_DA = ['Januar','Februar','Marts','April','Maj','Juni','Juli','August','September','Oktober','November','December'];
+const WD_DA = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+
+document.getElementById('cal-prev').addEventListener('click', ()=>{
+  calViewMonth--; if(calViewMonth < 0){ calViewMonth = 11; calViewYear--; }
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', ()=>{
+  calViewMonth++; if(calViewMonth > 11){ calViewMonth = 0; calViewYear++; }
+  renderCalendar();
+});
+
+function heistsOnDate(dateStr){
+  return heists.filter(h => h.date === dateStr);
+}
+
+function renderCalendar(){
+  document.getElementById('cal-label').textContent = `${MONTHS_DA[calViewMonth]} ${calViewYear}`;
+  const grid = document.getElementById('cal-grid');
+  const first = new Date(calViewYear, calViewMonth, 1);
+  let startOffset = first.getDay() - 1; if(startOffset < 0) startOffset = 6; // Monday-first
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  let html = WD_DA.map(w=>`<div class="bh-cal-wd">${w}</div>`).join('');
+  for(let i=0;i<startOffset;i++) html += '<div class="bh-cal-day bh-cal-empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayH = heistsOnDate(dateStr);
+    const has = dayH.length > 0;
+    let dotClass = '';
+    if(has){
+      const statuses = dayH.map(h=>h.status || 'planlagt');
+      if(statuses.every(s=>s==='gennemført')) dotClass = 'st-green';
+      else if(statuses.every(s=>s==='aflyst')) dotClass = 'st-red';
+    }
+    const cls = ['bh-cal-day'];
+    if(dateStr === todayStr) cls.push('bh-cal-today');
+    if(has) cls.push('bh-cal-has');
+    if(dateStr === calSelectedDate) cls.push('bh-cal-selected');
+    html += `<div class="${cls.join(' ')}" data-date="${dateStr}">${d}${has?`<span class="dot ${dotClass}"></span>`:''}</div>`;
+  }
+  grid.className = 'bh-cal-grid';
+  grid.innerHTML = html;
+  grid.querySelectorAll('.bh-cal-day:not(.bh-cal-empty)').forEach(el=>{
+    el.addEventListener('click', ()=>{ calSelectedDate = el.dataset.date; renderCalendar(); renderCalDayDetail(); });
+  });
+  renderCalDayDetail();
+}
+
+function renderCalDayDetail(){
+  const wrap = document.getElementById('cal-day-detail');
+  if(!calSelectedDate){ wrap.innerHTML = ''; return; }
+  const dayHeists = heistsOnDate(calSelectedDate);
+  const dayAvail = availability.filter(a=>a.date === calSelectedDate);
+  const wdName = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][new Date(calSelectedDate+'T00:00:00').getDay()];
+
+  const statusBadge = s => s==='gennemført' ? '<span class="bh-badge bh-badge-green">Gennemført</span>' : s==='aflyst' ? '<span class="bh-badge bh-badge-red">Aflyst</span>' : '<span class="bh-badge bh-badge-blue">Planlagt</span>';
+
+  const heistsHtml = dayHeists.length === 0 ? '<p class="bh-card-meta">Ingen heists planlagt denne dag endnu.</p>' :
+    dayHeists.map(h=>`<div class="bh-skill-row"><span>${escapeHtml(h.name)}${h.time ? ` &middot; ${h.time}` : ''} ${statusBadge(h.status || 'planlagt')}</span><span style="font-family:var(--mono);color:var(--text-dim);">${h.crew ? escapeHtml(h.crew) : ''}</span></div>`).join('');
+
+  const avHtml = dayAvail.length === 0 ? '<p class="bh-card-meta">Ingen har sagt "jeg kan" endnu.</p>' :
+    dayAvail.map(a=>`<div class="bh-skill-row"><span>${escapeHtml(a.name)}${a.note ? ` <span style="color:var(--text-faint);">&mdash; ${escapeHtml(a.note)}</span>` : ''}</span><span style="display:flex;align-items:center;gap:10px;"><span style="font-family:var(--mono);color:var(--amber);">${a.from}&ndash;${a.to}</span><button class="bh-remove-x" data-rsvp="${a.id}">&times;</button></span></div>`).join('');
+
+  wrap.innerHTML = `<div class="bh-form-panel">
+    <div class="bh-form-title">${wdName} ${calSelectedDate}</div>
+
+    <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Heists denne dag</div>
+    ${heistsHtml}
+
+    <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px;">Hvem kan denne dag</div>
+    ${avHtml}
+
+    <div class="bh-form-row bh-2col" style="margin-top:12px;">
+      <div class="bh-field"><label>Dit navn</label><input type="text" id="rsvp-name" placeholder="F.eks. Snake"></div>
+      <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="rsvp-note" placeholder="F.eks. kun aften"></div>
+    </div>
+    <div class="bh-form-actions">
+      <button class="bh-btn bh-btn-primary bh-btn-sm" id="rsvp-add" type="button">Jeg kan denne dag</button>
+      ${dayAvail.length > 0 ? `<button class="bh-btn bh-btn-ghost bh-btn-sm" id="rsvp-use-date" type="button">Brug dato + tilgængelige som besætning</button>` : ''}
+    </div>
+  </div>`;
+
+  wrap.querySelectorAll('button[data-rsvp]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      availability = availability.filter(a=>a.id !== btn.dataset.rsvp);
+      await saveKey('availability', availability);
+      renderAvailability(); renderCalDayDetail();
+    });
+  });
+
+  const rsvpBtn = document.getElementById('rsvp-add');
+  if(rsvpBtn) rsvpBtn.addEventListener('click', async ()=>{
+    const name = document.getElementById('rsvp-name').value.trim();
+    const note = document.getElementById('rsvp-note').value.trim();
+    if(!name){ alert('Skriv dit navn.'); return; }
+    availability.push({id:uid(), name, date:calSelectedDate, from:'00:00', to:'23:59', note});
+    availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
+    await saveKey('availability', availability);
+    renderAvailability(); renderCalendar(); renderCalDayDetail();
+  });
+
+  const useDateBtn = document.getElementById('rsvp-use-date');
+  if(useDateBtn) useDateBtn.addEventListener('click', ()=>{
+    document.getElementById('hs-date').value = calSelectedDate;
+    document.getElementById('hs-crew').value = [...new Set(dayAvail.map(a=>a.name))].join(', ');
+    document.getElementById('hs-name').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+document.getElementById('hs-suggest').addEventListener('click', ()=>{
+  const out = document.getElementById('hs-suggest-result');
+  const today = new Date().toISOString().slice(0,10);
+  const counts = {};
+  availability.forEach(a=>{
+    if(a.date < today) return;
+    if(!counts[a.date]) counts[a.date] = new Set();
+    counts[a.date].add(a.name);
+  });
+  const dates = Object.keys(counts);
+  if(dates.length === 0){ out.innerHTML = '<p class="bh-card-meta" style="margin:6px 0 10px;">Ingen fremtidige tilgængelighedstider registreret endnu — bed folk om at udfylde tilgængelighed først.</p>'; return; }
+  dates.sort((a,b)=> counts[b].size - counts[a].size || a.localeCompare(b));
+  const best = dates[0];
+  const names = [...counts[best]];
+  document.getElementById('hs-date').value = best;
+  document.getElementById('hs-crew').value = names.join(', ');
+  const wdName = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][new Date(best+'T00:00:00').getDay()];
+  out.innerHTML = `<p class="bh-card-meta" style="margin:6px 0 10px;">Bedste dato: <strong style="color:var(--amber);">${wdName} ${best}</strong> &mdash; ${names.length} tilgængelige (${escapeHtml(names.join(', '))}). Dato og besætning er udfyldt automatisk.</p>`;
+});
+
+// ---------- TILGÆNGELIGHED (heist-planlægger) ----------
+let availability = [];
+
+document.getElementById('av-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('av-name').value.trim();
+  const date = document.getElementById('av-date').value;
+  const from = document.getElementById('av-from').value;
+  const to = document.getElementById('av-to').value;
+  const note = document.getElementById('av-note').value.trim();
+  if(!name || !date || !from || !to){ alert('Udfyld navn, dato, fra-tid og til-tid.'); return; }
+  availability.push({id:uid(), name, date, from, to, note});
+  availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
+  await saveKey('availability', availability);
+  document.getElementById('av-name').value=''; document.getElementById('av-date').value='';
+  document.getElementById('av-from').value=''; document.getElementById('av-to').value=''; document.getElementById('av-note').value='';
+  renderAvailability();
+});
+
+function renderAvailability(){
+  const wrap = document.getElementById('avail-wrap');
+  if(availability.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen tider endnu</h3><p>Tilføj hvornår du kan deltage i et heist ovenfor.</p></div>'; return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const groups = {};
+  availability.forEach(a=>{ if(!groups[a.date]) groups[a.date] = []; groups[a.date].push(a); });
+  const dates = Object.keys(groups).sort();
+
+  const weekdays = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  wrap.innerHTML = dates.map(date=>{
+    const wd = weekdays[new Date(date+'T00:00:00').getDay()];
+    const past = date < today;
+    const rows = groups[date].map(a=>`
+      <div class="bh-skill-row">
+        <span>${escapeHtml(a.name)}${a.note ? ` <span style="color:var(--text-faint);">&mdash; ${escapeHtml(a.note)}</span>` : ''}</span>
+        <span style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--mono);color:var(--amber);">${a.from}&ndash;${a.to}</span>
+          <button class="bh-remove-x" data-id="${a.id}">&times;</button>
+        </span>
+      </div>`).join('');
+    return `<div class="bh-form-panel" style="${past?'opacity:.55;':''}">
+      <div class="bh-form-title">${wd} &middot; ${date}${past ? ' <span class="bh-badge bh-badge-dim" style="margin-left:6px;">Overstået</span>' : ''}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      availability = availability.filter(a=>a.id !== btn.dataset.id);
+      await saveKey('availability', availability);
+      renderAvailability();
+    });
+  });
+}
+
 // ---------- HEIST ----------
 function makeItemRow(name='', qty=1, gathered=false){
   const div = document.createElement('div');
@@ -598,6 +908,10 @@ document.getElementById('hs-items').appendChild(makeItemRow());
 
 document.getElementById('hs-save').addEventListener('click', async ()=>{
   const name = document.getElementById('hs-name').value.trim();
+  const date = document.getElementById('hs-date').value;
+  const time = document.getElementById('hs-time').value;
+  const crew = document.getElementById('hs-crew').value.trim();
+  const status = document.getElementById('hs-status').value;
   if(!name){ alert('Giv heistet et navn.'); return; }
   const items = [];
   document.querySelectorAll('#hs-items .bh-item-row').forEach(row=>{
@@ -607,24 +921,40 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
     if(n) items.push({name:n, qty:q, gathered:g});
   });
   if(items.length === 0){ alert('Tilføj mindst ét item.'); return; }
-  heists.push({id:uid(), name, items});
+  heists.push({id:uid(), name, date, time, crew, status, items});
   await saveKey('heists', heists);
-  document.getElementById('hs-name').value=''; document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
-  renderHeists();
+  document.getElementById('hs-name').value=''; document.getElementById('hs-date').value=''; document.getElementById('hs-time').value=''; document.getElementById('hs-crew').value=''; document.getElementById('hs-status').value='planlagt';
+  document.getElementById('hs-suggest-result').innerHTML='';
+  document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
+  renderHeists(); renderCalendar();
 });
 
 function renderHeists(){
   const list = document.getElementById('heist-list');
   document.getElementById('heist-count').textContent = heists.length;
   if(heists.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen heists</h3><p>Planlæg dit første heist ovenfor.</p></div>'; return; }
+  const statusStripe = s => s==='gennemført' ? 'var(--green)' : s==='aflyst' ? 'var(--red)' : 'var(--blue)';
+  const statusBadge = s => s==='gennemført' ? '<span class="bh-badge bh-badge-green">Gennemført</span>' : s==='aflyst' ? '<span class="bh-badge bh-badge-red">Aflyst</span>' : '<span class="bh-badge bh-badge-blue">Planlagt</span>';
   list.innerHTML = heists.map(h=>{
     const done = h.items.filter(i=>i.gathered).length;
     const pct = Math.round((done / h.items.length) * 100);
-    return `<div class="bh-card" style="--stripe:var(--blue);">
-      <p class="bh-card-name">${escapeHtml(h.name)}</p>
+    const status = h.status || 'planlagt';
+    return `<div class="bh-card" style="--stripe:${statusStripe(status)};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <p class="bh-card-name">${escapeHtml(h.name)}</p>
+        ${statusBadge(status)}
+      </div>
+      <p class="bh-card-meta">${h.date ? `${h.date}${h.time ? ' · ' + h.time : ''}` : 'Ingen dato sat'}${h.crew ? `<br>Besætning: ${escapeHtml(h.crew)}` : ''}</p>
       <p class="bh-card-meta">${done}/${h.items.length} items klar</p>
       ${h.items.map((it,idx)=>`<div class="bh-skill-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;"><input type="checkbox" class="bh-chk hs-toggle" data-hid="${h.id}" data-idx="${idx}" ${it.gathered?'checked':''}><span style="${it.gathered?'color:var(--green);text-decoration:line-through;':''}">${escapeHtml(it.name)}</span></label><span style="font-family:var(--mono);color:var(--text-dim);">&times;${it.qty}</span></div>`).join('')}
       <div class="bh-progress-row"><div class="bh-progress-track"><div class="bh-progress-fill" style="width:${pct}%;"></div></div><div class="bh-progress-label">${pct}%</div></div>
+      <div class="bh-field" style="margin-top:8px;"><label>Status</label>
+        <select class="hs-status-change" data-hid="${h.id}">
+          <option value="planlagt" ${status==='planlagt'?'selected':''}>Planlagt</option>
+          <option value="gennemført" ${status==='gennemført'?'selected':''}>Gennemført</option>
+          <option value="aflyst" ${status==='aflyst'?'selected':''}>Aflyst</option>
+        </select>
+      </div>
       <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm hs-delete" data-hid="${h.id}">Slet</button></div>
     </div>`;
   }).join('');
@@ -635,8 +965,14 @@ function renderHeists(){
       await saveKey('heists', heists); renderHeists();
     });
   });
+  list.querySelectorAll('.hs-status-change').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const h = heists.find(x=>x.id===sel.dataset.hid);
+      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); }
+    });
+  });
   list.querySelectorAll('.hs-delete').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); });
+    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); });
   });
 }
 
@@ -697,10 +1033,11 @@ function renderMeetings(){
         meetings = await loadKey('meetings', []);
         drugs = await loadKey('drugs', []);
         materials = await loadKey('materials', DEFAULT_MATERIALS.slice());
+        availability = await loadKey('availability', []);
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials();
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar();
     updateCountPill('crafting');
   }catch(err){
     document.getElementById('bh-root').innerHTML = `
