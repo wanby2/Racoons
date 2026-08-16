@@ -169,6 +169,7 @@
     <div class="bh-tabs" id="bh-tabs">
       <button class="bh-tab active" data-tab="crafting">Crafting</button>
       <button class="bh-tab" data-tab="stoffer">Stoffer</button>
+      <button class="bh-tab" data-tab="hvidvask">Hvidvask</button>
       <button class="bh-tab" data-tab="heist">Heists</button>
       <button class="bh-tab" data-tab="meetings">Møder</button>
     </div>
@@ -246,6 +247,23 @@
       </div>
       <div class="bh-section-title">Lager <span class="bh-count-pill" id="drug-count" style="margin-left:auto;"></span></div>
       <div id="drug-list" class="bh-grid"></div>
+    </div>
+
+    <!-- HVIDVASK -->
+    <div class="bh-panel" id="panel-hvidvask" style="display:none;">
+      <div class="bh-section-title">Vask penge</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Beløb (beskidt)</label><input type="number" id="lw-amount" min="0" step="1" placeholder="F.eks. 50000"></div>
+          <div class="bh-field"><label>Vaskes til (%)</label><input type="number" id="lw-percent" min="0" max="100" step="1" placeholder="F.eks. 70"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="lw-note" placeholder="F.eks. via Bahama Mamas"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="lw-calc" type="button">Beregn</button></div>
+      </div>
+      <div id="lw-result"></div>
+
+      <div class="bh-section-title">Historik <span class="bh-count-pill" id="lw-count" style="margin-left:auto;"></span></div>
+      <div id="lw-history"></div>
     </div>
 
     <!-- HEIST -->
@@ -419,7 +437,7 @@ document.querySelectorAll('.bh-tab').forEach(t=>{
 });
 function updateCountPill(tab){
   const pill = document.getElementById('bh-count-pill');
-  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} stoffer`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} stoffer`, hvidvask: `${launders.length} vasket`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
   pill.textContent = map[tab] || '—';
 }
 
@@ -699,6 +717,58 @@ function renderDrugs(){
       await saveKey('drugs', drugs);
       if(editingDrugId === btn.dataset.del) resetDrugForm();
       renderDrugs();
+    });
+  });
+}
+
+// ---------- HVIDVASK ----------
+let launders = [];
+const fmtKr = n => new Intl.NumberFormat('da-DK').format(Math.round(n));
+
+document.getElementById('lw-calc').addEventListener('click', async ()=>{
+  const amount = parseFloat(document.getElementById('lw-amount').value);
+  const percent = parseFloat(document.getElementById('lw-percent').value);
+  const note = document.getElementById('lw-note').value.trim();
+  const out = document.getElementById('lw-result');
+  if(!amount || amount <= 0 || isNaN(percent) || percent < 0 || percent > 100){
+    alert('Udfyld et gyldigt beløb og en procent mellem 0 og 100.');
+    return;
+  }
+  const clean = amount * (percent / 100);
+  const fee = amount - clean;
+
+  out.innerHTML = `<div class="bh-form-panel">
+    <div class="bh-form-title">Resultat</div>
+    <div class="bh-total-row"><span>Beskidt beløb</span><span class="qty">${fmtKr(amount)} kr</span></div>
+    <div class="bh-total-row"><span>Vaskeprocent</span><span class="qty">${percent}%</span></div>
+    <div class="bh-total-row"><span>Du skal have tilbage</span><span class="qty" style="color:var(--green);">${fmtKr(clean)} kr</span></div>
+    <div class="bh-total-row"><span>Går til gebyr/tab</span><span class="qty" style="color:var(--red);">${fmtKr(fee)} kr</span></div>
+  </div>`;
+
+  launders.push({id:uid(), amount, percent, clean, fee, note, date:new Date().toISOString()});
+  await saveKey('launders', launders);
+  renderLaunderHistory();
+});
+
+function renderLaunderHistory(){
+  const wrap = document.getElementById('lw-history');
+  document.getElementById('lw-count').textContent = launders.length;
+  if(launders.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen vask registreret endnu</h3><p>Beregn din første vask ovenfor.</p></div>'; return; }
+  const sorted = [...launders].sort((a,b)=> b.date.localeCompare(a.date));
+  wrap.innerHTML = `<div class="bh-grid">` + sorted.map(l=>{
+    const d = new Date(l.date);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="bh-card" style="--stripe:var(--green);">
+      <p class="bh-card-name">${fmtKr(l.amount)} kr &rarr; ${fmtKr(l.clean)} kr</p>
+      <p class="bh-card-meta">${l.percent}% vask &middot; ${dateStr}${l.note ? `<br>${escapeHtml(l.note)}` : ''}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${l.id}">Slet</button></div>
+    </div>`;
+  }).join('') + `</div>`;
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      launders = launders.filter(l=>l.id !== btn.dataset.id);
+      await saveKey('launders', launders);
+      renderLaunderHistory();
     });
   });
 }
@@ -1034,10 +1104,11 @@ function renderMeetings(){
         drugs = await loadKey('drugs', []);
         materials = await loadKey('materials', DEFAULT_MATERIALS.slice());
         availability = await loadKey('availability', []);
+        launders = await loadKey('launders', []);
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar();
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory();
     updateCountPill('crafting');
   }catch(err){
     document.getElementById('bh-root').innerHTML = `
