@@ -24,7 +24,25 @@
     --disp:'Space Grotesk', system-ui, sans-serif;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--disp);min-height:100vh;}
+  html{scrollbar-color: var(--line) var(--bg);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2px solid var(--bg);}
+  ::-webkit-scrollbar-thumb:hover{background:#39485a;}
+  body{
+    margin:0;color:var(--text);font-family:var(--disp);min-height:100vh;position:relative;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,169,59,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,158,234,0.07), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  }
+  #bh-root{position:relative;z-index:1;}
   button, input, select, textarea{font-family:var(--disp);}
 
   #bh-root{max-width:1080px;margin:0 auto;}
@@ -33,13 +51,17 @@
     display:flex;align-items:center;justify-content:space-between;gap:14px;
     padding:16px 24px;background:linear-gradient(180deg,#141b23,#10151b);
     border-bottom:1px solid var(--line);flex-wrap:wrap;
+    position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
+    box-shadow:0 8px 24px -12px rgba(0,0,0,0.6);
   }
   .bh-brand{display:flex;align-items:center;gap:12px;}
   .bh-brand-mark{
-    width:34px;height:34px;border-radius:8px;background:var(--amber);color:#1a1206;
+    width:34px;height:34px;border-radius:8px;background:linear-gradient(145deg, #ffcf7a, var(--amber));color:#1a1206;
     font-weight:700;font-family:var(--mono);display:flex;align-items:center;justify-content:center;
-    font-size:12px;letter-spacing:-0.5px;box-shadow:0 0 0 3px rgba(242,169,59,0.15);flex-shrink:0;
+    font-size:12px;letter-spacing:-0.5px;box-shadow:0 0 0 3px rgba(242,169,59,0.15), 0 4px 14px -4px rgba(242,169,59,0.55);flex-shrink:0;
+    transition:transform .25s ease, box-shadow .25s ease;
   }
+  .bh-brand-mark:hover{transform:rotate(-4deg) scale(1.05);box-shadow:0 0 0 3px rgba(242,169,59,0.22), 0 6px 18px -4px rgba(242,169,59,0.7);}
   .bh-brand-text h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.2px;}
   .bh-name-input{
     background:transparent;border:none;color:var(--text);font-family:var(--disp);
@@ -49,21 +71,49 @@
   .bh-brand-text p{margin:0;font-size:11px;color:var(--text-dim);font-family:var(--mono);letter-spacing:.3px;}
 
   .bh-tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;flex-wrap:wrap;}
-  .bh-tab{border:none;background:transparent;color:var(--text-dim);padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;}
-  .bh-tab.active{background:var(--amber);color:#1a1206;}
-  .bh-tab:not(.active):hover{color:var(--text);}
+  .bh-tab{border:none;background:transparent;color:var(--text-dim);padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .18s ease, color .18s ease, transform .12s ease;}
+  .bh-tab.active{background:var(--amber);color:#1a1206;box-shadow:0 2px 10px -2px rgba(242,169,59,0.5);}
+  .bh-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,0.04);}
+  .bh-tab:active{transform:scale(0.96);}
 
   .bh-count-pill{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--line);padding:5px 10px;border-radius:20px;background:var(--panel);white-space:nowrap;}
   .bh-shared-note{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:8px 24px 0;display:flex;align-items:center;gap:6px;}
-  .bh-shared-note .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;}
+  .bh-shared-note .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;box-shadow:0 0 0 0 rgba(53,214,138,0.6);animation:bh-pulse 2.2s infinite;}
+  @keyframes bh-pulse{
+    0%{box-shadow:0 0 0 0 rgba(53,214,138,0.55);}
+    70%{box-shadow:0 0 0 6px rgba(53,214,138,0);}
+    100%{box-shadow:0 0 0 0 rgba(53,214,138,0);}
+  }
 
   .bh-body{padding:20px 24px 40px;}
 
+  .bh-dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 24px 6px;}
+  .bh-dash-card{
+    background:linear-gradient(160deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;
+    display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    cursor:pointer;
+  }
+  .bh-dash-card:hover{transform:translateY(-2px);border-color:var(--dash-color,var(--amber));box-shadow:0 10px 22px -14px var(--dash-color,rgba(242,169,59,0.6));}
+  .bh-dash-card::after{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;background:var(--dash-color,var(--amber));opacity:.12;filter:blur(6px);}
+  .bh-dash-icon{font-size:16px;line-height:1;}
+  .bh-dash-value{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--text);letter-spacing:.2px;}
+  .bh-dash-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);}
+
+  .bh-panel{animation:bh-fade-in .28s ease;}
+  @keyframes bh-fade-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .bh-card{animation:bh-card-in .32s ease backwards;}
+  @keyframes bh-card-in{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
   .bh-section-title{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin:26px 0 10px;display:flex;align-items:center;gap:8px;}
   .bh-section-title:first-child{margin-top:0;}
-  .bh-section-title::after{content:'';flex:1;height:1px;background:var(--line);}
+  .bh-section-title::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--amber);flex-shrink:0;}
+  .bh-section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg, var(--line), transparent);}
 
-  .bh-form-panel{background:var(--panel-raised);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}
+  .bh-form-panel{background:var(--panel-raised);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 0 rgba(255,255,255,0.02) inset, 0 10px 26px -18px rgba(0,0,0,0.7);transition:border-color .2s ease;}
+  .bh-form-panel:focus-within{border-color:#3a4a5c;}
   .bh-form-title{font-size:13px;font-weight:700;margin:0 0 14px;color:var(--text);}
   .bh-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
   .bh-form-row.bh-2col{grid-template-columns:1fr 1fr;}
@@ -71,20 +121,22 @@
   .bh-field label{display:block;font-size:10.5px;font-family:var(--mono);color:var(--text-dim);margin-bottom:5px;letter-spacing:.3px;text-transform:uppercase;}
   .bh-field input, .bh-field select, .bh-field textarea{
     width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
-    padding:9px 11px;border-radius:8px;font-size:13px;outline:none;
+    padding:9px 11px;border-radius:8px;font-size:13px;outline:none;transition:border-color .16s ease, box-shadow .16s ease;
   }
   .bh-field textarea{resize:vertical;min-height:56px;font-family:var(--disp);}
-  .bh-field input:focus, .bh-field select:focus, .bh-field textarea:focus{border-color:var(--amber);}
+  .bh-field input:focus, .bh-field select:focus, .bh-field textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(242,169,59,0.14);}
   .bh-form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
 
-  .bh-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;transition:transform .08s ease, filter .12s ease;}
+  .bh-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;transition:transform .08s ease, filter .12s ease, box-shadow .18s ease;}
   .bh-btn:active{transform:scale(0.97);}
-  .bh-btn-primary{background:var(--amber);color:#1a1206;}
-  .bh-btn-primary:hover{filter:brightness(1.08);}
+  .bh-btn-primary{background:linear-gradient(155deg, #ffc36b, var(--amber));color:#1a1206;box-shadow:0 3px 12px -4px rgba(242,169,59,0.6);position:relative;overflow:hidden;}
+  .bh-btn-primary::before{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg, transparent, rgba(255,255,255,0.45), transparent);transform:skewX(-20deg);transition:left .5s ease;}
+  .bh-btn-primary:hover::before{left:130%;}
+  .bh-btn-primary:hover{filter:brightness(1.08);box-shadow:0 4px 16px -3px rgba(242,169,59,0.75);}
   .bh-btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--line);}
-  .bh-btn-ghost:hover{color:var(--text);border-color:#39485a;}
+  .bh-btn-ghost:hover{color:var(--text);border-color:#39485a;background:rgba(255,255,255,0.03);}
   .bh-btn-danger{background:rgba(229,85,95,0.12);color:var(--red);border:1px solid rgba(229,85,95,0.35);}
-  .bh-btn-danger:hover{background:rgba(229,85,95,0.2);}
+  .bh-btn-danger:hover{background:rgba(229,85,95,0.2);box-shadow:0 2px 12px -4px rgba(229,85,95,0.5);}
   .bh-btn-sm{padding:6px 11px;font-size:11.5px;}
 
   .bh-ing-row, .bh-item-row{display:grid;grid-template-columns:1fr 90px 30px;gap:8px;margin-bottom:6px;align-items:center;}
@@ -94,22 +146,28 @@
   .bh-remove-x:hover{color:var(--red);border-color:rgba(229,85,95,0.4);background:rgba(229,85,95,0.08);}
 
   .bh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
-  .bh-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;overflow:hidden;}
-  .bh-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,var(--text-faint));}
+  .bh-card{
+    background:linear-gradient(165deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;overflow:hidden;
+    box-shadow:0 10px 24px -18px rgba(0,0,0,0.8);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .bh-card:hover{transform:translateY(-2px);box-shadow:0 14px 30px -16px rgba(0,0,0,0.85);border-color:#33404f;}
+  .bh-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,var(--text-faint));box-shadow:0 0 12px 0 var(--stripe,transparent);}
   .bh-card-name{font-weight:700;font-size:15px;margin:0 0 3px;}
   .bh-card-meta{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.6;}
   .bh-card-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:8px;}
 
   .bh-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-family:var(--mono);padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.3px;}
-  .bh-badge-green{background:rgba(53,214,138,0.14);color:var(--green);}
-  .bh-badge-red{background:rgba(229,85,95,0.12);color:var(--red);}
-  .bh-badge-blue{background:rgba(79,158,234,0.14);color:var(--blue);}
-  .bh-badge-purple{background:rgba(185,138,242,0.14);color:var(--purple);}
+  .bh-badge-green{background:rgba(53,214,138,0.14);color:var(--green);box-shadow:0 0 10px -4px rgba(53,214,138,0.5);}
+  .bh-badge-red{background:rgba(229,85,95,0.12);color:var(--red);box-shadow:0 0 10px -4px rgba(229,85,95,0.5);}
+  .bh-badge-blue{background:rgba(79,158,234,0.14);color:var(--blue);box-shadow:0 0 10px -4px rgba(79,158,234,0.5);}
+  .bh-badge-purple{background:rgba(185,138,242,0.14);color:var(--purple);box-shadow:0 0 10px -4px rgba(185,138,242,0.5);}
   .bh-badge-dim{background:rgba(142,160,179,0.1);color:var(--text-dim);}
 
   .bh-progress-row{display:flex;align-items:center;gap:8px;margin:8px 0;}
   .bh-progress-track{flex:1;height:6px;background:#0d1218;border-radius:4px;overflow:hidden;}
-  .bh-progress-fill{height:100%;background:var(--amber);border-radius:4px;transition:width .4s ease;}
+  .bh-progress-fill{height:100%;background:linear-gradient(90deg, #ffc36b, var(--amber));border-radius:4px;transition:width .4s ease;box-shadow:0 0 8px 0 rgba(242,169,59,0.5);}
   .bh-progress-label{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);min-width:34px;text-align:right;}
 
   .bh-skill-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
@@ -117,7 +175,8 @@
 
   .bh-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-raised);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);}
 
-  .bh-empty{text-align:center;padding:40px 20px;color:var(--text-dim);border:1px dashed var(--line);border-radius:12px;}
+  .bh-empty{text-align:center;padding:40px 20px;color:var(--text-dim);border:1px dashed var(--line);border-radius:12px;transition:border-color .2s ease;}
+  .bh-empty:hover{border-color:#3a4a5c;}
   .bh-empty h3{color:var(--text);margin:6px 0 6px;font-size:14px;}
   .bh-empty p{margin:0;font-size:12.5px;}
 
@@ -138,15 +197,15 @@
 
   .bh-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .bh-cal-wd{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-align:center;padding:4px 0;letter-spacing:.3px;text-transform:uppercase;}
-  .bh-cal-day{position:relative;aspect-ratio:1/1;min-height:38px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);cursor:pointer;}
+  .bh-cal-day{position:relative;aspect-ratio:1/1;min-height:38px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);cursor:pointer;transition:transform .12s ease, border-color .15s ease, background .15s ease;}
   .bh-cal-day.bh-cal-empty{border:none;background:transparent;cursor:default;}
-  .bh-cal-day.bh-cal-today{border-color:var(--amber);color:var(--text);}
+  .bh-cal-day.bh-cal-today{border-color:var(--amber);color:var(--text);box-shadow:0 0 0 1px rgba(242,169,59,0.25) inset;}
   .bh-cal-day.bh-cal-has{background:rgba(242,169,59,0.1);border-color:rgba(242,169,59,0.4);color:var(--text);font-weight:600;}
   .bh-cal-day.bh-cal-selected{outline:2px solid var(--amber);}
-  .bh-cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);position:absolute;bottom:5px;}
-  .bh-cal-day .dot.st-green{background:var(--green);}
-  .bh-cal-day .dot.st-red{background:var(--red);}
-  .bh-cal-day:hover:not(.bh-cal-empty){border-color:var(--amber);}
+  .bh-cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);position:absolute;bottom:5px;box-shadow:0 0 6px 0 var(--amber);}
+  .bh-cal-day .dot.st-green{background:var(--green);box-shadow:0 0 6px 0 var(--green);}
+  .bh-cal-day .dot.st-red{background:var(--red);box-shadow:0 0 6px 0 var(--red);}
+  .bh-cal-day:hover:not(.bh-cal-empty){border-color:var(--amber);transform:scale(1.05);}
 
   ::placeholder{color:var(--text-faint);}
 
@@ -167,15 +226,18 @@
       </div>
     </div>
     <div class="bh-tabs" id="bh-tabs">
-      <button class="bh-tab active" data-tab="crafting">Crafting</button>
-      <button class="bh-tab" data-tab="stoffer">Stoffer</button>
-      <button class="bh-tab" data-tab="hvidvask">Hvidvask</button>
-      <button class="bh-tab" data-tab="heist">Heists</button>
-      <button class="bh-tab" data-tab="meetings">Møder</button>
+      <button class="bh-tab active" data-tab="crafting">⚙️ Crafting</button>
+      <button class="bh-tab" data-tab="stoffer">💊 Bande stoffer</button>
+      <button class="bh-tab" data-tab="hvidvask">💵 Hvidvask</button>
+      <button class="bh-tab" data-tab="bandekasse">🏦 Bandekasse</button>
+      <button class="bh-tab" data-tab="heist">🎯 Heists</button>
+      <button class="bh-tab" data-tab="meetings">📋 Møder</button>
     </div>
     <div class="bh-count-pill" id="bh-count-pill">—</div>
   </div>
   <div class="bh-shared-note"><span class="dot"></span>Data deles med alle der åbner dette dokument.</div>
+
+  <div class="bh-dash" id="bh-dash"></div>
 
   <div class="bh-body">
 
@@ -231,21 +293,18 @@
 
     <!-- STOFFER -->
     <div class="bh-panel" id="panel-stoffer" style="display:none;">
-      <div class="bh-section-title">Tilføj stof</div>
+      <div class="bh-section-title">Tilføj bande-stof</div>
       <div class="bh-form-panel">
-        <div class="bh-form-row">
+        <div class="bh-form-row bh-2col">
           <div class="bh-field"><label>Navn</label><input type="text" id="dg-name" placeholder="F.eks. Kokain"></div>
-          <div class="bh-field"><label>Salgspris pr. enhed</label><input type="number" id="dg-price" min="0" step="1" placeholder="F.eks. 250"></div>
-          <div class="bh-field"><label>Output pr. batch</label><input type="number" id="dg-output" value="1" min="1"></div>
+          <div class="bh-field"><label>Antal på lager</label><input type="number" id="dg-stock" value="0" min="0"></div>
         </div>
-        <div class="bh-field"><label>Opskrift (ingredienser)</label><div id="dg-ingredients"></div></div>
         <div class="bh-form-actions">
-          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="dg-add-ing" type="button">+ Tilføj ingrediens</button>
           <button class="bh-btn bh-btn-ghost" id="dg-cancel" type="button" style="display:none;">Annullér redigering</button>
           <button class="bh-btn bh-btn-primary" id="dg-save" type="button">Tilføj stof</button>
         </div>
       </div>
-      <div class="bh-section-title">Lager <span class="bh-count-pill" id="drug-count" style="margin-left:auto;"></span></div>
+      <div class="bh-section-title">Bande stoffer <span class="bh-count-pill" id="drug-count" style="margin-left:auto;"></span></div>
       <div id="drug-list" class="bh-grid"></div>
     </div>
 
@@ -264,6 +323,36 @@
 
       <div class="bh-section-title">Historik <span class="bh-count-pill" id="lw-count" style="margin-left:auto;"></span></div>
       <div id="lw-history"></div>
+    </div>
+
+    <!-- BANDEKASSE -->
+    <div class="bh-panel" id="panel-bandekasse" style="display:none;">
+      <div class="bh-section-title">Bandekasse</div>
+      <div class="bh-form-panel" style="text-align:center;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Nuværende saldo</div>
+        <div id="bk-balance" style="font-family:var(--mono);font-size:32px;font-weight:600;color:var(--green);"></div>
+      </div>
+
+      <div class="bh-section-title">Registrer transaktion</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Type</label>
+            <select id="bk-type">
+              <option value="indsæt">Indsæt penge</option>
+              <option value="udtag">Tag penge ud</option>
+            </select>
+          </div>
+          <div class="bh-field"><label>Beløb</label><input type="number" id="bk-amount" min="0" step="1" placeholder="F.eks. 15000"></div>
+        </div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Hvem</label><input type="text" id="bk-who" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Begrundelse</label><input type="text" id="bk-reason" placeholder="F.eks. Køb af udstyr til heist"></div>
+        </div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="bk-save" type="button">Registrer</button></div>
+      </div>
+
+      <div class="bh-section-title">Transaktionshistorik <span class="bh-count-pill" id="bk-count" style="margin-left:auto;"></span></div>
+      <div id="bk-history" class="bh-grid"></div>
     </div>
 
     <!-- HEIST -->
@@ -437,9 +526,46 @@ document.querySelectorAll('.bh-tab').forEach(t=>{
 });
 function updateCountPill(tab){
   const pill = document.getElementById('bh-count-pill');
-  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} stoffer`, hvidvask: `${launders.length} vasket`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
   pill.textContent = map[tab] || '—';
 }
+
+function staggerCards(container){
+  container.querySelectorAll('.bh-card').forEach((el, i)=>{ el.style.animationDelay = (i * 35) + 'ms'; });
+}
+
+function renderDashboard(){
+  const wrap = document.getElementById('bh-dash');
+  const today = new Date().toISOString().slice(0,10);
+  const nextHeist = heists.filter(h => h.date && h.date >= today && (h.status||'planlagt') === 'planlagt').sort((a,b)=> a.date.localeCompare(b.date))[0];
+  const nextMeeting = meetings.filter(m => m.date >= today).sort((a,b)=> a.date.localeCompare(b.date))[0];
+  const totalMoneyWashed = launders.reduce((s,l)=> s + (l.clean||0), 0);
+  const totalMoneyFromDrugs = drugs.reduce((s,d)=> s + (d.moneyReceived||0), 0);
+  const fmt = n => new Intl.NumberFormat('da-DK', {notation:'compact', maximumFractionDigits:1}).format(n);
+
+  const cards = [
+    { icon:'⚙️', value: recipes.length, label:'Opskrifter', color:'var(--amber)', tab:'crafting' },
+    { icon:'💊', value: drugs.length, label:'Bande stoffer', color:'var(--purple)', tab:'stoffer' },
+    { icon:'🏦', value: fmt(treasuryBalance()) + ' kr', label:'Bandekasse', color:'var(--green)', tab:'bandekasse' },
+    { icon:'🎯', value: nextHeist ? nextHeist.date.slice(5) : '—', label: nextHeist ? 'Næste heist' : 'Ingen heist planlagt', color:'var(--blue)', tab:'heist' },
+    { icon:'📋', value: nextMeeting ? nextMeeting.date.slice(5) : '—', label: nextMeeting ? 'Næste møde' : 'Ingen møde planlagt', color:'var(--purple)', tab:'meetings' },
+  ];
+
+  wrap.innerHTML = cards.map(c=>`
+    <div class="bh-dash-card" style="--dash-color:${c.color};" data-goto="${c.tab}">
+      <span class="bh-dash-icon">${c.icon}</span>
+      <span class="bh-dash-value">${c.value}</span>
+      <span class="bh-dash-label">${c.label}</span>
+    </div>`).join('');
+
+  wrap.querySelectorAll('.bh-dash-card').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+      if(tabBtn) tabBtn.click();
+    });
+  });
+}
+
 
 const gangInput = document.getElementById('gangName');
 gangInput.addEventListener('change', async ()=>{ gangName = gangInput.value.trim() || 'MIN BANDE'; await saveKey('gangname', gangName); });
@@ -535,6 +661,7 @@ function renderRecipes(){
       }).join(', ')}</p>
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${r.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
     </div>`).join('') + `</div>`;
+  staggerCards(list);
   list.querySelectorAll('button[data-edit]').forEach(btn=>{
     btn.addEventListener('click', ()=> startEditRecipe(btn.dataset.edit));
   });
@@ -626,14 +753,10 @@ document.getElementById('cl-calc').addEventListener('click', ()=>{
 });
 
 // ---------- STOFFER ----------
-document.getElementById('dg-add-ing').addEventListener('click', ()=> document.getElementById('dg-ingredients').appendChild(makeIngRow()));
-document.getElementById('dg-ingredients').appendChild(makeIngRow());
-
 let editingDrugId = null;
 function resetDrugForm(){
   editingDrugId = null;
-  document.getElementById('dg-name').value=''; document.getElementById('dg-price').value=''; document.getElementById('dg-output').value='1';
-  document.getElementById('dg-ingredients').innerHTML=''; document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  document.getElementById('dg-name').value=''; document.getElementById('dg-stock').value='0';
   document.getElementById('dg-save').textContent = 'Tilføj stof';
   document.getElementById('dg-cancel').style.display = 'none';
 }
@@ -644,11 +767,7 @@ function startEditDrug(id){
   if(!d) return;
   editingDrugId = id;
   document.getElementById('dg-name').value = d.name;
-  document.getElementById('dg-price').value = d.price;
-  document.getElementById('dg-output').value = d.output || 1;
-  document.getElementById('dg-ingredients').innerHTML = '';
-  (d.ingredients || []).forEach(i=> document.getElementById('dg-ingredients').appendChild(makeIngRow(i.name, i.qty)));
-  if(!d.ingredients || d.ingredients.length === 0) document.getElementById('dg-ingredients').appendChild(makeIngRow());
+  document.getElementById('dg-stock').value = d.stock || 0;
   document.getElementById('dg-save').textContent = 'Opdatér stof';
   document.getElementById('dg-cancel').style.display = 'inline-flex';
   document.getElementById('dg-name').scrollIntoView({behavior:'smooth', block:'center'});
@@ -656,30 +775,23 @@ function startEditDrug(id){
 
 document.getElementById('dg-save').addEventListener('click', async ()=>{
   const name = document.getElementById('dg-name').value.trim();
-  const price = parseFloat(document.getElementById('dg-price').value) || 0;
-  const output = parseFloat(document.getElementById('dg-output').value) || 1;
+  const stock = parseInt(document.getElementById('dg-stock').value) || 0;
   if(!name){ alert('Giv stoffet et navn.'); return; }
-  const ingredients = [];
-  document.querySelectorAll('#dg-ingredients .bh-ing-row').forEach(row=>{
-    const n = row.querySelector('.ing-name').value.trim();
-    const q = parseFloat(row.querySelector('.ing-qty').value);
-    if(n && q > 0) ingredients.push({name:n, qty:q});
-  });
   if(editingDrugId){
     const d = drugs.find(x=>x.id===editingDrugId);
-    if(d){ d.name = name; d.price = price; d.output = output; d.ingredients = ingredients; }
+    if(d){ d.name = name; d.stock = stock; }
   } else {
-    drugs.push({id:uid(), name, price, output, ingredients, stock:0});
+    drugs.push({id:uid(), name, stock, taken:0, sold:0, moneyReceived:0});
   }
   await saveKey('drugs', drugs);
   resetDrugForm();
   renderDrugs();
 });
 
-async function adjustStock(id, delta){
+async function setTaken(id, value){
   const d = drugs.find(x=>x.id===id);
   if(!d) return;
-  d.stock = Math.max(0, d.stock + delta);
+  d.taken = Math.max(0, value);
   await saveKey('drugs', drugs);
   renderDrugs();
 }
@@ -687,26 +799,62 @@ async function adjustStock(id, delta){
 function renderDrugs(){
   const list = document.getElementById('drug-list');
   document.getElementById('drug-count').textContent = drugs.length;
-  if(drugs.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen stoffer</h3><p>Tilføj jeres første vare ovenfor.</p></div>'; return; }
+  if(drugs.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen bande-stoffer</h3><p>Tilføj jeres første vare ovenfor.</p></div>'; return; }
   const fmt = n => new Intl.NumberFormat('da-DK').format(n);
   list.innerHTML = drugs.map(d=>{
-    const total = d.price * d.stock;
-    const recipeText = (d.ingredients && d.ingredients.length) ? d.ingredients.map(i=>`${i.qty}&times; ${escapeHtml(i.name)}`).join(', ') : 'Ingen opskrift angivet';
+    const taken = d.taken || 0;
+    const stock = d.stock || 0;
+    const moneyReceived = d.moneyReceived || 0;
     return `<div class="bh-card" style="--stripe:var(--purple);">
       <p class="bh-card-name">${escapeHtml(d.name)}</p>
-      <p class="bh-card-meta">${fmt(d.price)} kr/stk &middot; lagerværdi ${fmt(total)} kr</p>
-      <p class="bh-card-meta">Opskrift (${d.output || 1} stk/batch): ${recipeText}</p>
-      <div class="bh-stock-ctrl">
-        <button class="bh-stock-btn" data-id="${d.id}" data-delta="-1">&minus;</button>
-        <span class="bh-stock-val">${d.stock}</span>
-        <button class="bh-stock-btn" data-id="${d.id}" data-delta="1">+</button>
-        <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-left:4px;">på lager</span>
+      <p class="bh-card-meta">Taget: ${taken}</p>
+
+      <div class="bh-field" style="margin-top:10px;"><label>Antal på lager</label>
+        <input type="number" class="stock-input" data-id="${d.id}" min="0" step="1" value="${stock}">
       </div>
+
+      <div class="bh-field" style="margin-top:8px;"><label>Tilføj taget (produceret)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20" style="flex:1;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button">Tilføj</button>
+        </div>
+      </div>
+
+      <div class="bh-total-row" style="margin-top:8px;"><span>Penge modtaget i alt</span><span class="qty">${fmt(moneyReceived)} kr</span></div>
+      <div class="bh-field" style="margin-top:6px;"><label>Tilføj modtaget beløb</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="money-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 4500" style="flex:1;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm money-add" data-id="${d.id}" type="button">Tilføj</button>
+        </div>
+      </div>
+
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${d.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
     </div>`;
   }).join('');
-  list.querySelectorAll('.bh-stock-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> adjustStock(btn.dataset.id, parseInt(btn.dataset.delta)));
+  staggerCards(list);
+  list.querySelectorAll('.stock-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const d = drugs.find(x=>x.id===inp.dataset.id);
+      if(d){ d.stock = Math.max(0, parseInt(inp.value) || 0); await saveKey('drugs', drugs); renderDrugs(); }
+    });
+  });
+  list.querySelectorAll('.taken-add').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const input = list.querySelector(`.taken-input[data-id="${btn.dataset.id}"]`);
+      const amount = parseInt(input.value);
+      if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
+      const d = drugs.find(x=>x.id===btn.dataset.id);
+      if(d){ d.taken = (d.taken || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); }
+    });
+  });
+  list.querySelectorAll('.money-add').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const input = list.querySelector(`.money-input[data-id="${btn.dataset.id}"]`);
+      const amount = parseFloat(input.value);
+      if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
+      const d = drugs.find(x=>x.id===btn.dataset.id);
+      if(d){ d.moneyReceived = (d.moneyReceived || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); }
+    });
   });
   list.querySelectorAll('button[data-edit]').forEach(btn=>{
     btn.addEventListener('click', ()=> startEditDrug(btn.dataset.edit));
@@ -748,6 +896,7 @@ document.getElementById('lw-calc').addEventListener('click', async ()=>{
   launders.push({id:uid(), amount, percent, clean, fee, note, date:new Date().toISOString()});
   await saveKey('launders', launders);
   renderLaunderHistory();
+  renderDashboard();
 });
 
 function renderLaunderHistory(){
@@ -769,6 +918,63 @@ function renderLaunderHistory(){
       launders = launders.filter(l=>l.id !== btn.dataset.id);
       await saveKey('launders', launders);
       renderLaunderHistory();
+      renderDashboard();
+    });
+  });
+}
+
+// ---------- BANDEKASSE ----------
+let treasury = [];
+
+function treasuryBalance(){
+  return treasury.reduce((sum, t) => sum + (t.type === 'udtag' ? -t.amount : t.amount), 0);
+}
+
+document.getElementById('bk-save').addEventListener('click', async ()=>{
+  const type = document.getElementById('bk-type').value;
+  const amount = parseFloat(document.getElementById('bk-amount').value);
+  const who = document.getElementById('bk-who').value.trim();
+  const reason = document.getElementById('bk-reason').value.trim();
+  if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
+  if(!reason){ alert('Skriv en begrundelse.'); return; }
+  if(type === 'udtag' && amount > treasuryBalance()){
+    if(!confirm(`Kassen indeholder kun ${fmtKr(treasuryBalance())} kr. Vil du alligevel registrere udtaget?`)) return;
+  }
+  treasury.push({id:uid(), type, amount, who, reason, date:new Date().toISOString()});
+  await saveKey('treasury', treasury);
+  document.getElementById('bk-amount').value=''; document.getElementById('bk-who').value=''; document.getElementById('bk-reason').value=''; document.getElementById('bk-type').value='indsæt';
+  renderTreasury(); renderDashboard();
+});
+
+function renderTreasury(){
+  document.getElementById('bk-count').textContent = treasury.length;
+  const balance = treasuryBalance();
+  const balEl = document.getElementById('bk-balance');
+  balEl.textContent = `${fmtKr(balance)} kr`;
+  balEl.style.color = balance < 0 ? 'var(--red)' : 'var(--green)';
+
+  const wrap = document.getElementById('bk-history');
+  if(treasury.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen transaktioner endnu</h3><p>Registrer et indskud eller udtag ovenfor.</p></div>'; return; }
+  const sorted = [...treasury].sort((a,b)=> b.date.localeCompare(a.date));
+  wrap.innerHTML = sorted.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const isDeposit = t.type !== 'udtag';
+    return `<div class="bh-card" style="--stripe:${isDeposit ? 'var(--green)' : 'var(--red)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <p class="bh-card-name">${isDeposit ? '+' : '&minus;'}${fmtKr(t.amount)} kr</p>
+        <span class="bh-badge ${isDeposit ? 'bh-badge-green' : 'bh-badge-red'}">${isDeposit ? 'Indsat' : 'Udtaget'}</span>
+      </div>
+      <p class="bh-card-meta">${escapeHtml(t.reason)}${t.who ? `<br>${escapeHtml(t.who)}` : ''}<br>${dateStr}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${t.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  staggerCards(wrap);
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      treasury = treasury.filter(t=>t.id !== btn.dataset.id);
+      await saveKey('treasury', treasury);
+      renderTreasury(); renderDashboard();
     });
   });
 }
@@ -996,7 +1202,7 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
   document.getElementById('hs-name').value=''; document.getElementById('hs-date').value=''; document.getElementById('hs-time').value=''; document.getElementById('hs-crew').value=''; document.getElementById('hs-status').value='planlagt';
   document.getElementById('hs-suggest-result').innerHTML='';
   document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
-  renderHeists(); renderCalendar();
+  renderHeists(); renderCalendar(); renderDashboard();
 });
 
 function renderHeists(){
@@ -1028,6 +1234,7 @@ function renderHeists(){
       <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm hs-delete" data-hid="${h.id}">Slet</button></div>
     </div>`;
   }).join('');
+  staggerCards(list);
   list.querySelectorAll('.hs-toggle').forEach(cb=>{
     cb.addEventListener('change', async ()=>{
       const h = heists.find(x=>x.id===cb.dataset.hid);
@@ -1038,11 +1245,11 @@ function renderHeists(){
   list.querySelectorAll('.hs-status-change').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const h = heists.find(x=>x.id===sel.dataset.hid);
-      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); }
+      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); }
     });
   });
   list.querySelectorAll('.hs-delete').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); });
+    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); });
   });
 }
 
@@ -1059,6 +1266,7 @@ document.getElementById('mt-save').addEventListener('click', async ()=>{
   await saveKey('meetings', meetings);
   document.getElementById('mt-title').value=''; document.getElementById('mt-date').value=''; document.getElementById('mt-time').value=''; document.getElementById('mt-agenda').value=''; document.getElementById('mt-attendees').value='';
   renderMeetings();
+  renderDashboard();
 });
 function renderMeetings(){
   const list = document.getElementById('meeting-list');
@@ -1074,8 +1282,9 @@ function renderMeetings(){
       ${m.attendees ? `<p class="bh-card-meta">Deltagere: ${escapeHtml(m.attendees)}</p>` : ''}
       <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${m.id}">Slet</button></div>
     </div>`).join('');
+  staggerCards(list);
   list.querySelectorAll('button[data-id]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ meetings = meetings.filter(m=>m.id !== btn.dataset.id); await saveKey('meetings', meetings); renderMeetings(); });
+    btn.addEventListener('click', async ()=>{ meetings = meetings.filter(m=>m.id !== btn.dataset.id); await saveKey('meetings', meetings); renderMeetings(); renderDashboard(); });
   });
 }
 
@@ -1105,10 +1314,11 @@ function renderMeetings(){
         materials = await loadKey('materials', DEFAULT_MATERIALS.slice());
         availability = await loadKey('availability', []);
         launders = await loadKey('launders', []);
+        treasury = await loadKey('treasury', []);
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory();
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderDashboard();
     updateCountPill('crafting');
   }catch(err){
     document.getElementById('bh-root').innerHTML = `
@@ -1126,4 +1336,4 @@ function renderMeetings(){
 })();
 </script>
 </body>
-</html> 
+</html>
