@@ -298,6 +298,9 @@
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
         </div>
         <div id="craftlist-rows"></div>
+        <div class="bh-form-row bh-2col" style="margin-top:10px;">
+          <div class="bh-field"><label>Spild — træk fra materialer (%)</label><input type="number" id="cl-percent" min="0" max="100" step="1" placeholder="F.eks. 10"></div>
+        </div>
         <div class="bh-form-actions" style="margin-top:10px;">
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-clear" type="button">Ryd liste</button>
           <button class="bh-btn bh-btn-primary" id="cl-calc" type="button">Beregn total</button>
@@ -782,16 +785,26 @@ document.getElementById('cl-calc').addEventListener('click', ()=>{
       expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, visited);
     });
   });
+
+  const percentRaw = document.getElementById('cl-percent').value;
+  const hasPercent = percentRaw !== '';
+  const percent = hasPercent ? Math.max(0, Math.min(100, parseFloat(percentRaw))) : 0;
+
   const rows = Object.keys(totals).sort().map(name=>{
     const total = Math.ceil(totals[name]*100)/100;
-    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+    if(!hasPercent || percent === 0){
+      return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+    }
+    const adjusted = Math.ceil(totals[name] * (1 - percent/100) * 100)/100;
+    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total} <span style="color:var(--text-faint);">&rarr;</span> <span style="color:var(--amber);">${adjusted}</span></span></div>`;
   }).join('');
   const subRows = Object.keys(subcomponents).sort().map(name=>{
     const total = Math.ceil(subcomponents[name]*100)/100;
     return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
   }).join('');
   const subBlock = subRows ? `<div class="bh-form-panel" style="margin-top:10px;"><div class="bh-form-title">Delkomponenter der skal craftes undervejs</div>${subRows}</div>` : '';
-  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov (rå materialer)</div>${rows}</div>${subBlock}`;
+  const percentNote = hasPercent && percent !== 0 ? `<p class="bh-card-meta" style="margin:0 0 8px;">${percent}% trukket fra: første tal er beregnet behov, pil viser materialebehovet efter fradrag.</p>` : '';
+  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov (rå materialer)</div>${percentNote}${rows}</div>${subBlock}`;
 });
 
 // ---------- STOFFER ----------
