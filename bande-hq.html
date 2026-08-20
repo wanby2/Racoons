@@ -532,6 +532,13 @@
           <p class="bh-card-meta" style="margin-bottom:12px;">Download alt bandens data (opskrifter, stoffer, heists, møder, bandekasse, hvidvask, blackmarket, materialer, medlemmer-tilgængelighed, aktivitetslog) som én JSON-fil — en uafhængig sikkerhedskopi, hvis noget skulle gå galt med Firebase.</p>
           <button class="bh-btn bh-btn-primary" id="admin-backup" type="button">Download backup (JSON)</button>
         </div>
+
+        <div class="bh-section-title">Aktivitetslog</div>
+        <div class="bh-form-panel">
+          <p class="bh-card-meta" style="margin-bottom:12px;">Rydder hele aktivitetsloggen, som vises under Overblik. Kan ikke fortrydes.</p>
+          <button class="bh-btn bh-btn-danger" id="admin-clear-log" type="button">Ryd aktivitetslog</button>
+          <span id="admin-clear-log-status" style="margin-left:10px;font-size:12px;color:var(--green);"></span>
+        </div>
       </div>
     </div>
 
@@ -1280,8 +1287,15 @@ document.getElementById('wh-save').addEventListener('click', async ()=>{
 const ADMIN_CODE = 'Rcadmin123';
 const ADMIN_STORAGE_KEY = 'bh-admin-unlocked';
 
+function safeSessionGet(key){
+  try{ return sessionStorage.getItem(key); }catch(e){ return null; }
+}
+function safeSessionSet(key, value){
+  try{ sessionStorage.setItem(key, value); }catch(e){ /* ignore */ }
+}
+
 function tryUnlockAdmin(){
-  if(sessionStorage.getItem(ADMIN_STORAGE_KEY) === '1'){
+  if(safeSessionGet(ADMIN_STORAGE_KEY) === '1'){
     document.getElementById('admin-gate').style.display = 'none';
     document.getElementById('admin-content').style.display = 'block';
     return true;
@@ -1292,8 +1306,8 @@ function tryUnlockAdmin(){
 document.getElementById('admin-code-submit').addEventListener('click', ()=>{
   const input = document.getElementById('admin-code-input');
   const errorEl = document.getElementById('admin-code-error');
-  if(input.value === ADMIN_CODE){
-    sessionStorage.setItem(ADMIN_STORAGE_KEY, '1');
+  if(input.value.trim() === ADMIN_CODE){
+    safeSessionSet(ADMIN_STORAGE_KEY, '1');
     document.getElementById('admin-gate').style.display = 'none';
     document.getElementById('admin-content').style.display = 'block';
   } else {
@@ -1321,6 +1335,17 @@ document.getElementById('admin-backup').addEventListener('click', ()=>{
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+});
+
+document.getElementById('admin-clear-log').addEventListener('click', async ()=>{
+  if(activityLog.length === 0){ return; }
+  if(!confirm(`Er du sikker på at du vil rydde alle ${activityLog.length} hændelser i aktivitetsloggen? Kan ikke fortrydes.`)) return;
+  activityLog = [];
+  await saveKey('activitylog', activityLog);
+  renderActivityLog();
+  const statusEl = document.getElementById('admin-clear-log-status');
+  statusEl.textContent = 'Aktivitetslog ryddet.';
+  setTimeout(()=>{ statusEl.textContent = ''; }, 3000);
 });
 
 // Fire-and-forget: sends a Discord embed to the configured webhook for a category.
@@ -1968,6 +1993,18 @@ async function init(){
 const ACCESS_CODE = 'Racoons1234';
 const LOCK_STORAGE_KEY = 'bh-unlocked';
 
+// Wrap all localStorage access: some browsers (Safari on file://, strict privacy
+// modes, some in-app browsers) throw a SecurityError just from *touching*
+// localStorage. If that throw happens inside initLock() before the submit
+// listener is attached, the unlock button silently does nothing forever —
+// this safe wrapper prevents that failure mode entirely.
+function safeStorageGet(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+function safeStorageSet(key, value){
+  try{ localStorage.setItem(key, value); }catch(e){ /* ignore — unlock still proceeds */ }
+}
+
 function unlockApp(){
   document.getElementById('bh-lock').classList.add('bh-hidden');
   document.getElementById('bh-loading').classList.remove('bh-hidden');
@@ -1975,7 +2012,7 @@ function unlockApp(){
 }
 
 (function initLock(){
-  if(localStorage.getItem(LOCK_STORAGE_KEY) === '1'){
+  if(safeStorageGet(LOCK_STORAGE_KEY) === '1'){
     unlockApp();
     return;
   }
@@ -1987,7 +2024,7 @@ function unlockApp(){
   function attempt(){
     const entered = input.value.trim();
     if(entered === ACCESS_CODE){
-      localStorage.setItem(LOCK_STORAGE_KEY, '1');
+      safeStorageSet(LOCK_STORAGE_KEY, '1');
       unlockApp();
     } else {
       errorEl.textContent = entered === '' ? 'Skriv koden først.' : 'Forkert kode — prøv igen.';
