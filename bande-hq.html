@@ -207,6 +207,28 @@
   .bh-cal-day .dot.st-red{background:var(--red);box-shadow:0 0 6px 0 var(--red);}
   .bh-cal-day:hover:not(.bh-cal-empty){border-color:var(--amber);transform:scale(1.05);}
 
+  .bh-cal-tooltip{
+    position:fixed;z-index:200;background:var(--panel-raised);border:1px solid var(--line);
+    border-radius:8px;padding:8px 11px;font-size:11.5px;color:var(--text);pointer-events:none;
+    box-shadow:0 10px 26px -10px rgba(0,0,0,0.75);max-width:220px;white-space:pre-line;
+    opacity:0;transform:translateY(4px);transition:opacity .12s ease, transform .12s ease;
+  }
+  .bh-cal-tooltip.bh-cal-tooltip-show{opacity:1;transform:translateY(0);}
+
+  .bh-ov-item{
+    display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line);
+  }
+  .bh-ov-item:first-of-type{border-top:none;}
+  .bh-ov-icon{
+    width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;flex-shrink:0;background:color-mix(in srgb, var(--ov-color, var(--amber)) 16%, transparent);
+    box-shadow:0 0 10px -4px var(--ov-color, var(--amber));
+  }
+  .bh-ov-body{flex:1;min-width:0;}
+  .bh-ov-title{font-size:13px;font-weight:600;color:var(--text);margin:0 0 2px;}
+  .bh-ov-meta{font-size:11.5px;color:var(--text-dim);font-family:var(--mono);}
+  .bh-ov-date{font-family:var(--mono);font-size:11px;color:var(--text-faint);white-space:nowrap;flex-shrink:0;padding-top:2px;}
+
   ::placeholder{color:var(--text-faint);}
 
   #bh-lock{
@@ -268,10 +290,13 @@
       </div>
     </div>
     <div class="bh-tabs" id="bh-tabs">
-      <button class="bh-tab active" data-tab="crafting">⚙️ Crafting</button>
+      <button class="bh-tab active" data-tab="overblik">📊 Overblik</button>
+      <button class="bh-tab" data-tab="crafting">⚙️ Crafting</button>
       <button class="bh-tab" data-tab="stoffer">💊 Bande stoffer</button>
       <button class="bh-tab" data-tab="hvidvask">💵 Hvidvask</button>
       <button class="bh-tab" data-tab="bandekasse">🏦 Bandekasse</button>
+      <button class="bh-tab" data-tab="blackmarket">🕶️ Blackmarket</button>
+      <button class="bh-tab" data-tab="webhooks">🔔 Webhooks</button>
       <button class="bh-tab" data-tab="heist">🎯 Heists</button>
       <button class="bh-tab" data-tab="meetings">📋 Møder</button>
     </div>
@@ -283,8 +308,17 @@
 
   <div class="bh-body">
 
+    <!-- OVERBLIK -->
+    <div class="bh-panel" id="panel-overblik">
+      <div class="bh-section-title">Kommende</div>
+      <div id="ov-upcoming"></div>
+
+      <div class="bh-section-title">Seneste aktivitet</div>
+      <div id="ov-activity"></div>
+    </div>
+
     <!-- CRAFTING -->
-    <div class="bh-panel" id="panel-crafting">
+    <div class="bh-panel" id="panel-crafting" style="display:none;">
       <div class="bh-section-title">Craft-liste — beregn flere opskrifter samlet</div>
       <div class="bh-form-panel">
         <div class="bh-form-row bh-2col">
@@ -359,7 +393,7 @@
       <div class="bh-form-panel">
         <div class="bh-form-row bh-2col">
           <div class="bh-field"><label>Beløb (beskidt)</label><input type="number" id="lw-amount" min="0" step="1" placeholder="F.eks. 50000"></div>
-          <div class="bh-field"><label>Vaskes til (%)</label><input type="number" id="lw-percent" min="0" max="100" step="1" placeholder="F.eks. 70"></div>
+          <div class="bh-field"><label>Gebyr — trækkes fra (%)</label><input type="number" id="lw-percent" min="0" max="100" step="1" placeholder="F.eks. 15"></div>
         </div>
         <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="lw-note" placeholder="F.eks. via Bahama Mamas"></div>
         <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="lw-calc" type="button">Beregn</button></div>
@@ -398,6 +432,41 @@
 
       <div class="bh-section-title">Transaktionshistorik <span class="bh-count-pill" id="bk-count" style="margin-left:auto;"></span></div>
       <div id="bk-history" class="bh-grid"></div>
+    </div>
+
+    <!-- BLACKMARKET -->
+    <div class="bh-panel" id="panel-blackmarket" style="display:none;">
+      <div class="bh-section-title">Tilføj item</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Item</label><input type="text" id="bm-name" placeholder="F.eks. Silencer"></div>
+          <div class="bh-field"><label>Pris</label><input type="number" id="bm-price" min="0" step="1" placeholder="F.eks. 12000"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="bm-note" placeholder="F.eks. Kontakt Rex"></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost" id="bm-cancel" type="button" style="display:none;">Annullér redigering</button>
+          <button class="bh-btn bh-btn-primary" id="bm-save" type="button">Tilføj item</button>
+        </div>
+      </div>
+
+      <div class="bh-section-title">Blackmarket <span class="bh-count-pill" id="bm-count" style="margin-left:auto;"></span></div>
+      <div class="bh-field" style="margin-bottom:10px;"><input type="text" id="bm-search" placeholder="Søg efter item..."></div>
+      <div id="bm-list" class="bh-grid"></div>
+    </div>
+
+    <!-- WEBHOOKS -->
+    <div class="bh-panel" id="panel-webhooks" style="display:none;">
+      <div class="bh-section-title">Discord webhooks</div>
+      <p class="bh-card-meta" style="margin-bottom:14px;">Indsæt en Discord webhook-URL pr. kategori, så sender Bande HQ automatisk en besked til den kanal, når noget sker. Lad et felt stå tomt for at slå notifikationer fra for den kategori. <a href="https://support.discord.com/hc/da/articles/228383668" target="_blank" rel="noopener" style="color:var(--amber);">Sådan opretter du en webhook i Discord →</a></p>
+      <div class="bh-form-panel">
+        <div class="bh-field"><label>💊 Bande stoffer</label><input type="text" id="wh-stoffer" placeholder="https://discord.com/api/webhooks/..."></div>
+        <div class="bh-field" style="margin-top:10px;"><label>💵 Hvidvask</label><input type="text" id="wh-hvidvask" placeholder="https://discord.com/api/webhooks/..."></div>
+        <div class="bh-field" style="margin-top:10px;"><label>🏦 Bandekasse</label><input type="text" id="wh-bandekasse" placeholder="https://discord.com/api/webhooks/..."></div>
+        <div class="bh-field" style="margin-top:10px;"><label>🎯 Heist</label><input type="text" id="wh-heist" placeholder="https://discord.com/api/webhooks/..."></div>
+        <div class="bh-field" style="margin-top:10px;"><label>📋 Møder</label><input type="text" id="wh-meetings" placeholder="https://discord.com/api/webhooks/..."></div>
+        <div class="bh-form-actions" style="margin-top:14px;"><button class="bh-btn bh-btn-primary" id="wh-save" type="button">Gem webhooks</button></div>
+      </div>
+      <div id="wh-status"></div>
     </div>
 
     <!-- HEIST -->
@@ -571,7 +640,7 @@ document.querySelectorAll('.bh-tab').forEach(t=>{
 });
 function updateCountPill(tab){
   const pill = document.getElementById('bh-count-pill');
-  const map = { crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  const map = { overblik: `overblik`, crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, blackmarket: `${blackmarket.length} items`, webhooks: `${Object.values(webhooks).filter(Boolean).length}/5 sat op`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
   pill.textContent = map[tab] || '—';
 }
 
@@ -609,6 +678,91 @@ function renderDashboard(){
       if(tabBtn) tabBtn.click();
     });
   });
+  renderOverview();
+}
+
+
+function renderOverview(){
+  const today = new Date().toISOString().slice(0,10);
+  const weekdays = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  const fmt = n => new Intl.NumberFormat('da-DK').format(Math.round(n));
+
+  // ---- Kommende: fremtidige heists og møder, sorteret efter dato ----
+  const upcoming = [];
+  heists.forEach(h=>{
+    if(h.date && h.date >= today && (h.status||'planlagt') === 'planlagt'){
+      upcoming.push({ date:h.date, sortKey:h.date+(h.time||'00:00'), icon:'🎯', color:'var(--blue)',
+        title:h.name, meta:`Heist${h.time ? ' · ' + h.time : ''}${h.crew ? ' · ' + h.crew : ''}`, tab:'heist' });
+    }
+  });
+  meetings.forEach(m=>{
+    if(m.date >= today){
+      upcoming.push({ date:m.date, sortKey:m.date+(m.time||'00:00'), icon:'📋', color:'var(--purple)',
+        title:m.title, meta:`Møde${m.time ? ' · ' + m.time : ''}`, tab:'meetings' });
+    }
+  });
+  upcoming.sort((a,b)=> a.sortKey.localeCompare(b.sortKey));
+
+  const upWrap = document.getElementById('ov-upcoming');
+  if(upcoming.length === 0){
+    upWrap.innerHTML = '<div class="bh-empty"><h3>Intet planlagt lige nu</h3><p>Planlæg et heist eller møde, så dukker det op her.</p></div>';
+  } else {
+    upWrap.innerHTML = `<div class="bh-form-panel">` + upcoming.map(item=>{
+      const wd = weekdays[new Date(item.date+'T00:00:00').getDay()];
+      return `<div class="bh-ov-item" data-goto="${item.tab}" style="cursor:pointer;">
+        <div class="bh-ov-icon" style="--ov-color:${item.color};">${item.icon}</div>
+        <div class="bh-ov-body">
+          <p class="bh-ov-title">${escapeHtml(item.title)}</p>
+          <p class="bh-ov-meta">${item.meta}</p>
+        </div>
+        <div class="bh-ov-date">${wd.slice(0,3)} ${item.date}</div>
+      </div>`;
+    }).join('') + `</div>`;
+    upWrap.querySelectorAll('.bh-ov-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+        if(tabBtn) tabBtn.click();
+      });
+    });
+  }
+
+  // ---- Seneste aktivitet: hvidvask + bandekasse, sorteret nyest først ----
+  const activity = [];
+  launders.forEach(l=>{
+    activity.push({ ts:l.date, icon:'💵', color:'var(--green)',
+      title:`Vasket ${fmt(l.amount)} kr → ${fmt(l.clean)} kr`, meta:`Hvidvask${l.note ? ' · ' + l.note : ''}`, tab:'hvidvask' });
+  });
+  treasury.forEach(t=>{
+    const isDeposit = t.type !== 'udtag';
+    activity.push({ ts:t.date, icon:'🏦', color: isDeposit ? 'var(--green)' : 'var(--red)',
+      title:`${isDeposit ? '+' : '−'}${fmt(t.amount)} kr — ${t.reason}`, meta:`Bandekasse${t.who ? ' · ' + t.who : ''}`, tab:'bandekasse' });
+  });
+  activity.sort((a,b)=> b.ts.localeCompare(a.ts));
+  const recentActivity = activity.slice(0, 25);
+
+  const actWrap = document.getElementById('ov-activity');
+  if(recentActivity.length === 0){
+    actWrap.innerHTML = '<div class="bh-empty"><h3>Ingen aktivitet endnu</h3><p>Vask penge eller registrer en transaktion i bandekassen, så vises det her.</p></div>';
+  } else {
+    actWrap.innerHTML = `<div class="bh-form-panel">` + recentActivity.map(item=>{
+      const d = new Date(item.ts);
+      const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return `<div class="bh-ov-item" data-goto="${item.tab}" style="cursor:pointer;">
+        <div class="bh-ov-icon" style="--ov-color:${item.color};">${item.icon}</div>
+        <div class="bh-ov-body">
+          <p class="bh-ov-title">${item.title}</p>
+          <p class="bh-ov-meta">${item.meta}</p>
+        </div>
+        <div class="bh-ov-date">${dateStr}</div>
+      </div>`;
+    }).join('') + `</div>`;
+    actWrap.querySelectorAll('.bh-ov-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+        if(tabBtn) tabBtn.click();
+      });
+    });
+  }
 }
 
 
@@ -899,7 +1053,7 @@ function renderDrugs(){
       const amount = parseInt(input.value);
       if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
       const d = drugs.find(x=>x.id===btn.dataset.id);
-      if(d){ d.taken = (d.taken || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); }
+      if(d){ d.taken = (d.taken || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget (i alt: ${d.taken})`, 0xb98af2); }
     });
   });
   list.querySelectorAll('.money-add').forEach(btn=>{
@@ -908,7 +1062,7 @@ function renderDrugs(){
       const amount = parseFloat(input.value);
       if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
       const d = drugs.find(x=>x.id===btn.dataset.id);
-      if(d){ d.moneyReceived = (d.moneyReceived || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); }
+      if(d){ d.moneyReceived = (d.moneyReceived || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); sendWebhook('stoffer', '💊 Salg', `**${d.name}**: modtaget ${new Intl.NumberFormat('da-DK').format(amount)} kr (i alt: ${new Intl.NumberFormat('da-DK').format(d.moneyReceived)} kr)`, 0x35d68a); }
     });
   });
   list.querySelectorAll('button[data-edit]').forEach(btn=>{
@@ -937,13 +1091,13 @@ document.getElementById('lw-calc').addEventListener('click', async ()=>{
     alert('Udfyld et gyldigt beløb og en procent mellem 0 og 100.');
     return;
   }
-  const clean = amount * (percent / 100);
-  const fee = amount - clean;
+  const fee = amount * (percent / 100);
+  const clean = amount - fee;
 
   out.innerHTML = `<div class="bh-form-panel">
     <div class="bh-form-title">Resultat</div>
     <div class="bh-total-row"><span>Beskidt beløb</span><span class="qty">${fmtKr(amount)} kr</span></div>
-    <div class="bh-total-row"><span>Vaskeprocent</span><span class="qty">${percent}%</span></div>
+    <div class="bh-total-row"><span>Gebyr</span><span class="qty">${percent}%</span></div>
     <div class="bh-total-row"><span>Du skal have tilbage</span><span class="qty" style="color:var(--green);">${fmtKr(clean)} kr</span></div>
     <div class="bh-total-row"><span>Går til gebyr/tab</span><span class="qty" style="color:var(--red);">${fmtKr(fee)} kr</span></div>
   </div>`;
@@ -952,6 +1106,7 @@ document.getElementById('lw-calc').addEventListener('click', async ()=>{
   await saveKey('launders', launders);
   renderLaunderHistory();
   renderDashboard();
+  sendWebhook('hvidvask', '💵 Hvidvask', `${fmtKr(amount)} kr vasket (${percent}% gebyr) → **${fmtKr(clean)} kr** retur${note ? `\n${note}` : ''}`, 0x35d68a);
 });
 
 function renderLaunderHistory(){
@@ -964,7 +1119,7 @@ function renderLaunderHistory(){
     const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="bh-card" style="--stripe:var(--green);">
       <p class="bh-card-name">${fmtKr(l.amount)} kr &rarr; ${fmtKr(l.clean)} kr</p>
-      <p class="bh-card-meta">${l.percent}% vask &middot; ${dateStr}${l.note ? `<br>${escapeHtml(l.note)}` : ''}</p>
+      <p class="bh-card-meta">${l.percent}% gebyr &middot; ${dateStr}${l.note ? `<br>${escapeHtml(l.note)}` : ''}</p>
       <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${l.id}">Slet</button></div>
     </div>`;
   }).join('') + `</div>`;
@@ -976,6 +1131,53 @@ function renderLaunderHistory(){
       renderDashboard();
     });
   });
+}
+
+// ---------- WEBHOOKS (Discord) ----------
+let webhooks = {};
+
+function renderWebhookFields(){
+  document.getElementById('wh-stoffer').value = webhooks.stoffer || '';
+  document.getElementById('wh-hvidvask').value = webhooks.hvidvask || '';
+  document.getElementById('wh-bandekasse').value = webhooks.bandekasse || '';
+  document.getElementById('wh-heist').value = webhooks.heist || '';
+  document.getElementById('wh-meetings').value = webhooks.meetings || '';
+}
+
+document.getElementById('wh-save').addEventListener('click', async ()=>{
+  webhooks = {
+    stoffer: document.getElementById('wh-stoffer').value.trim(),
+    hvidvask: document.getElementById('wh-hvidvask').value.trim(),
+    bandekasse: document.getElementById('wh-bandekasse').value.trim(),
+    heist: document.getElementById('wh-heist').value.trim(),
+    meetings: document.getElementById('wh-meetings').value.trim(),
+  };
+  await saveKey('webhooks', webhooks);
+  const status = document.getElementById('wh-status');
+  status.innerHTML = '<p class="bh-card-meta" style="color:var(--green);">Webhooks gemt.</p>';
+  setTimeout(()=>{ status.innerHTML = ''; }, 3000);
+});
+
+// Fire-and-forget: sends a Discord embed to the configured webhook for a category.
+// Never blocks or throws into the caller — a failed notification should not stop the app.
+async function sendWebhook(category, title, description, color){
+  const url = webhooks[category];
+  if(!url) return;
+  try{
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        embeds: [{
+          title,
+          description,
+          color: color || 0xf2a93b,
+          footer: { text: gangName },
+          timestamp: new Date().toISOString(),
+        }]
+      })
+    });
+  }catch(e){ console.error('Discord webhook fejl', category, e); }
 }
 
 // ---------- BANDEKASSE ----------
@@ -999,6 +1201,8 @@ document.getElementById('bk-save').addEventListener('click', async ()=>{
   await saveKey('treasury', treasury);
   document.getElementById('bk-amount').value=''; document.getElementById('bk-who').value=''; document.getElementById('bk-reason').value=''; document.getElementById('bk-type').value='indsæt';
   renderTreasury(); renderDashboard();
+  const isDeposit = type !== 'udtag';
+  sendWebhook('bandekasse', '🏦 Bandekasse', `${isDeposit ? '➕ Indsat' : '➖ Taget ud'}: **${fmtKr(amount)} kr**\n${reason}${who ? `\n— ${who}` : ''}\nNy saldo: ${fmtKr(treasuryBalance())} kr`, isDeposit ? 0x35d68a : 0xe5555f);
 });
 
 function renderTreasury(){
@@ -1033,6 +1237,84 @@ function renderTreasury(){
     });
   });
 }
+
+// ---------- BLACKMARKET ----------
+let blackmarket = [];
+let editingBmId = null;
+
+function resetBmForm(){
+  editingBmId = null;
+  document.getElementById('bm-name').value=''; document.getElementById('bm-price').value=''; document.getElementById('bm-note').value='';
+  document.getElementById('bm-save').textContent = 'Tilføj item';
+  document.getElementById('bm-cancel').style.display = 'none';
+}
+document.getElementById('bm-cancel').addEventListener('click', resetBmForm);
+
+function startEditBm(id){
+  const item = blackmarket.find(x=>x.id===id);
+  if(!item) return;
+  editingBmId = id;
+  document.getElementById('bm-name').value = item.name;
+  document.getElementById('bm-price').value = item.price;
+  document.getElementById('bm-note').value = item.note || '';
+  document.getElementById('bm-save').textContent = 'Opdatér item';
+  document.getElementById('bm-cancel').style.display = 'inline-flex';
+  document.getElementById('bm-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+document.getElementById('bm-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('bm-name').value.trim();
+  const price = parseFloat(document.getElementById('bm-price').value);
+  const note = document.getElementById('bm-note').value.trim();
+  if(!name){ alert('Giv itemet et navn.'); return; }
+  if(isNaN(price) || price < 0){ alert('Skriv en gyldig pris.'); return; }
+  if(editingBmId){
+    const item = blackmarket.find(x=>x.id===editingBmId);
+    if(item){ item.name = name; item.price = price; item.note = note; }
+  } else {
+    blackmarket.push({id:uid(), name, price, note});
+  }
+  await saveKey('blackmarket', blackmarket);
+  resetBmForm();
+  renderBlackmarket();
+  renderDashboard();
+});
+
+function renderBlackmarket(){
+  const list = document.getElementById('bm-list');
+  document.getElementById('bm-count').textContent = blackmarket.length;
+  const fmt = n => new Intl.NumberFormat('da-DK').format(n);
+
+  const query = (document.getElementById('bm-search').value || '').trim().toLowerCase();
+  const filtered = query
+    ? blackmarket.filter(i => i.name.toLowerCase().includes(query) || (i.note || '').toLowerCase().includes(query))
+    : blackmarket;
+
+  if(blackmarket.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen items endnu</h3><p>Tilføj jeres første blackmarket-item ovenfor.</p></div>'; return; }
+  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen items matcher "${escapeHtml(query)}".</p></div>`; return; }
+
+  const sorted = [...filtered].sort((a,b)=> a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(item=>`
+    <div class="bh-card" style="--stripe:var(--red);">
+      <p class="bh-card-name">${escapeHtml(item.name)}</p>
+      <p class="bh-card-meta">${fmt(item.price)} kr${item.note ? `<br>${escapeHtml(item.note)}` : ''}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${item.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${item.id}">Slet</button></div>
+    </div>`).join('');
+  staggerCards(list);
+  list.querySelectorAll('button[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> startEditBm(btn.dataset.edit));
+  });
+  list.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      blackmarket = blackmarket.filter(i=>i.id !== btn.dataset.id);
+      await saveKey('blackmarket', blackmarket);
+      if(editingBmId === btn.dataset.id) resetBmForm();
+      renderBlackmarket();
+      renderDashboard();
+    });
+  });
+}
+document.getElementById('bm-search').addEventListener('input', renderBlackmarket);
 
 // ---------- HEIST-KALENDER ----------
 let calViewYear, calViewMonth, calSelectedDate = null;
@@ -1085,7 +1367,33 @@ function renderCalendar(){
   grid.querySelectorAll('.bh-cal-day:not(.bh-cal-empty)').forEach(el=>{
     el.addEventListener('click', ()=>{ calSelectedDate = el.dataset.date; renderCalendar(); renderCalDayDetail(); });
   });
+  wireCalTooltips(grid);
   renderCalDayDetail();
+}
+
+let calTooltipEl = null;
+function wireCalTooltips(grid){
+  if(!calTooltipEl){
+    calTooltipEl = document.createElement('div');
+    calTooltipEl.className = 'bh-cal-tooltip';
+    document.body.appendChild(calTooltipEl);
+  }
+  grid.querySelectorAll('.bh-cal-day.bh-cal-has').forEach(el=>{
+    el.removeAttribute('title');
+    el.addEventListener('mouseenter', ()=>{
+      const dayH = heistsOnDate(el.dataset.date);
+      if(dayH.length === 0) return;
+      calTooltipEl.textContent = dayH.map(h=>`${h.name}${h.time ? ' · ' + h.time : ''} — ${h.status || 'planlagt'}`).join('\n');
+      calTooltipEl.classList.add('bh-cal-tooltip-show');
+    });
+    el.addEventListener('mousemove', (e)=>{
+      calTooltipEl.style.left = (e.clientX + 14) + 'px';
+      calTooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+    el.addEventListener('mouseleave', ()=>{
+      calTooltipEl.classList.remove('bh-cal-tooltip-show');
+    });
+  });
 }
 
 function renderCalDayDetail(){
@@ -1258,6 +1566,7 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
   document.getElementById('hs-suggest-result').innerHTML='';
   document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
   renderHeists(); renderCalendar(); renderDashboard();
+  sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 ${crew}` : ''}`, 0x4f9eea);
 });
 
 function renderHeists(){
@@ -1300,7 +1609,10 @@ function renderHeists(){
   list.querySelectorAll('.hs-status-change').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const h = heists.find(x=>x.id===sel.dataset.hid);
-      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); }
+      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard();
+        const statusIcon = { planlagt:'📅', 'gennemført':'✅', aflyst:'❌' }[h.status] || '📅';
+        sendWebhook('heist', `${statusIcon} Heist opdateret`, `**${h.name}** er nu markeret som **${h.status}**`, h.status==='gennemført' ? 0x35d68a : h.status==='aflyst' ? 0xe5555f : 0x4f9eea);
+      }
     });
   });
   list.querySelectorAll('.hs-delete').forEach(btn=>{
@@ -1322,6 +1634,7 @@ document.getElementById('mt-save').addEventListener('click', async ()=>{
   document.getElementById('mt-title').value=''; document.getElementById('mt-date').value=''; document.getElementById('mt-time').value=''; document.getElementById('mt-agenda').value=''; document.getElementById('mt-attendees').value='';
   renderMeetings();
   renderDashboard();
+  sendWebhook('meetings', '📋 Nyt møde', `**${title}**\n📅 ${date}${time ? ' · ' + time : ''}${agenda ? `\n${agenda}` : ''}${attendees ? `\n👥 ${attendees}` : ''}`, 0xb98af2);
 });
 function renderMeetings(){
   const list = document.getElementById('meeting-list');
@@ -1370,11 +1683,13 @@ async function init(){
         availability = await loadKey('availability', []);
         launders = await loadKey('launders', []);
         treasury = await loadKey('treasury', []);
+        blackmarket = await loadKey('blackmarket', []);
+        webhooks = await loadKey('webhooks', {});
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderDashboard();
-    updateCountPill('crafting');
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard();
+    updateCountPill('overblik');
   }catch(err){
     document.getElementById('bh-root').innerHTML = `
       <div class="bh-body">
