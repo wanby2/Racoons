@@ -302,14 +302,14 @@
 </head>
 <body>
 <div id="bh-lock">
-  <div class="bh-lock-box">
+  <form class="bh-lock-box" id="bh-lock-form">
     <div class="bh-brand-mark" style="width:44px;height:44px;font-size:14px;margin:0 auto 14px;">BHQ</div>
     <div class="bh-lock-title">Bande HQ er låst</div>
     <p class="bh-lock-sub">Indtast koden for at få adgang</p>
-    <input type="password" id="bh-lock-input" placeholder="Kode" autocomplete="off">
-    <button class="bh-btn bh-btn-primary" id="bh-lock-submit" type="button" style="width:100%;justify-content:center;margin-top:10px;">Lås op</button>
+    <input type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" id="bh-lock-input" placeholder="Kode" autocomplete="off">
+    <button class="bh-btn bh-btn-primary" id="bh-lock-submit" type="submit" style="width:100%;justify-content:center;margin-top:10px;">Lås op</button>
     <p class="bh-lock-error" id="bh-lock-error"></p>
-  </div>
+  </form>
 </div>
 <div id="bh-loading" class="bh-hidden">
   <div class="bh-loading-mark">BHQ</div>
@@ -1979,24 +1979,24 @@ function unlockApp(){
     unlockApp();
     return;
   }
+  const form = document.getElementById('bh-lock-form');
   const input = document.getElementById('bh-lock-input');
-  const submit = document.getElementById('bh-lock-submit');
   const errorEl = document.getElementById('bh-lock-error');
   const box = document.querySelector('.bh-lock-box');
 
   function attempt(){
-    if(input.value === ACCESS_CODE){
+    const entered = input.value.trim();
+    if(entered === ACCESS_CODE){
       localStorage.setItem(LOCK_STORAGE_KEY, '1');
       unlockApp();
     } else {
-      errorEl.textContent = 'Forkert kode — prøv igen.';
+      errorEl.textContent = entered === '' ? 'Skriv koden først.' : 'Forkert kode — prøv igen.';
       box.classList.remove('bh-shake'); void box.offsetWidth; box.classList.add('bh-shake');
       input.value = '';
       input.focus();
     }
   }
-  submit.addEventListener('click', attempt);
-  input.addEventListener('keydown', e => { if(e.key === 'Enter') attempt(); });
+  form.addEventListener('submit', e => { e.preventDefault(); attempt(); });
   input.focus();
 })();
 </script>
