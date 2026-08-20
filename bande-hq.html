@@ -296,7 +296,7 @@
       <button class="bh-tab" data-tab="hvidvask">💵 Hvidvask</button>
       <button class="bh-tab" data-tab="bandekasse">🏦 Bandekasse</button>
       <button class="bh-tab" data-tab="blackmarket">🕶️ Blackmarket</button>
-      <button class="bh-tab" data-tab="webhooks">🔔 Webhooks</button>
+      <button class="bh-tab" data-tab="admin">🔐 Admin</button>
       <button class="bh-tab" data-tab="heist">🎯 Heists</button>
       <button class="bh-tab" data-tab="meetings">📋 Møder</button>
     </div>
@@ -455,18 +455,30 @@
     </div>
 
     <!-- WEBHOOKS -->
-    <div class="bh-panel" id="panel-webhooks" style="display:none;">
-      <div class="bh-section-title">Discord webhooks</div>
-      <p class="bh-card-meta" style="margin-bottom:14px;">Indsæt en Discord webhook-URL pr. kategori, så sender Bande HQ automatisk en besked til den kanal, når noget sker. Lad et felt stå tomt for at slå notifikationer fra for den kategori. <a href="https://support.discord.com/hc/da/articles/228383668" target="_blank" rel="noopener" style="color:var(--amber);">Sådan opretter du en webhook i Discord →</a></p>
-      <div class="bh-form-panel">
-        <div class="bh-field"><label>💊 Bande stoffer</label><input type="text" id="wh-stoffer" placeholder="https://discord.com/api/webhooks/..."></div>
-        <div class="bh-field" style="margin-top:10px;"><label>💵 Hvidvask</label><input type="text" id="wh-hvidvask" placeholder="https://discord.com/api/webhooks/..."></div>
-        <div class="bh-field" style="margin-top:10px;"><label>🏦 Bandekasse</label><input type="text" id="wh-bandekasse" placeholder="https://discord.com/api/webhooks/..."></div>
-        <div class="bh-field" style="margin-top:10px;"><label>🎯 Heist</label><input type="text" id="wh-heist" placeholder="https://discord.com/api/webhooks/..."></div>
-        <div class="bh-field" style="margin-top:10px;"><label>📋 Møder</label><input type="text" id="wh-meetings" placeholder="https://discord.com/api/webhooks/..."></div>
-        <div class="bh-form-actions" style="margin-top:14px;"><button class="bh-btn bh-btn-primary" id="wh-save" type="button">Gem webhooks</button></div>
+    <div class="bh-panel" id="panel-admin" style="display:none;">
+      <div id="admin-gate">
+        <div class="bh-section-title">Admin-adgang</div>
+        <div class="bh-form-panel" style="max-width:340px;">
+          <p class="bh-card-meta" style="margin-bottom:12px;">Denne fane kræver en separat admin-kode.</p>
+          <div class="bh-field"><label>Kode</label><input type="password" id="admin-code-input" placeholder="Admin-kode" autocomplete="off"></div>
+          <div class="bh-form-actions" style="margin-top:10px;"><button class="bh-btn bh-btn-primary" id="admin-code-submit" type="button">Lås op</button></div>
+          <p class="bh-lock-error" id="admin-code-error" style="text-align:left;margin:8px 0 0;"></p>
+        </div>
       </div>
-      <div id="wh-status"></div>
+
+      <div id="admin-content" style="display:none;">
+        <div class="bh-section-title">Discord webhooks</div>
+        <p class="bh-card-meta" style="margin-bottom:14px;">Indsæt en Discord webhook-URL pr. kategori, så sender Bande HQ automatisk en besked til den kanal, når noget sker. Lad et felt stå tomt for at slå notifikationer fra for den kategori. <a href="https://support.discord.com/hc/da/articles/228383668" target="_blank" rel="noopener" style="color:var(--amber);">Sådan opretter du en webhook i Discord →</a></p>
+        <div class="bh-form-panel">
+          <div class="bh-field"><label>💊 Bande stoffer</label><input type="text" id="wh-stoffer" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>💵 Hvidvask</label><input type="text" id="wh-hvidvask" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>🏦 Bandekasse</label><input type="text" id="wh-bandekasse" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>🎯 Heist</label><input type="text" id="wh-heist" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>📋 Møder</label><input type="text" id="wh-meetings" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-form-actions" style="margin-top:14px;"><button class="bh-btn bh-btn-primary" id="wh-save" type="button">Gem webhooks</button></div>
+        </div>
+        <div id="wh-status"></div>
+      </div>
     </div>
 
     <!-- HEIST -->
@@ -556,6 +568,18 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 const escapeAttr = s => String(s).replace(/"/g,'&quot;');
 const escapeHtml = s => String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
+// Shared number formatter (avoids constructing a new Intl.NumberFormat on every render)
+const FMT_DA = new Intl.NumberFormat('da-DK');
+const FMT_DA_COMPACT = new Intl.NumberFormat('da-DK', {notation:'compact', maximumFractionDigits:1});
+const fmtDA = n => FMT_DA.format(n);
+
+// Debounce: delays calling fn until `wait` ms after the last call — used on search
+// inputs so filtering doesn't re-render the list on every single keystroke.
+function debounce(fn, wait){
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+}
+
 // ===================== Firebase Realtime Database backend =====================
 // Sæt din Firebase "Database URL" ind her (slutter typisk på firebaseio.com
 // eller firebasedatabase.app). Se FIREBASE_SETUP.md for opsætningsvejledning.
@@ -636,11 +660,12 @@ document.querySelectorAll('.bh-tab').forEach(t=>{
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.tab).style.display='block';
     updateCountPill(t.dataset.tab);
+    if(t.dataset.tab === 'admin') tryUnlockAdmin();
   });
 });
 function updateCountPill(tab){
   const pill = document.getElementById('bh-count-pill');
-  const map = { overblik: `overblik`, crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, blackmarket: `${blackmarket.length} items`, webhooks: `${Object.values(webhooks).filter(Boolean).length}/5 sat op`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  const map = { overblik: `overblik`, crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, blackmarket: `${blackmarket.length} items`, admin: `admin`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
   pill.textContent = map[tab] || '—';
 }
 
@@ -654,8 +679,7 @@ function renderDashboard(){
   const nextHeist = heists.filter(h => h.date && h.date >= today && (h.status||'planlagt') === 'planlagt').sort((a,b)=> a.date.localeCompare(b.date))[0];
   const nextMeeting = meetings.filter(m => m.date >= today).sort((a,b)=> a.date.localeCompare(b.date))[0];
   const totalMoneyWashed = launders.reduce((s,l)=> s + (l.clean||0), 0);
-  const totalMoneyFromDrugs = drugs.reduce((s,d)=> s + (d.moneyReceived||0), 0);
-  const fmt = n => new Intl.NumberFormat('da-DK', {notation:'compact', maximumFractionDigits:1}).format(n);
+  const fmt = FMT_DA_COMPACT.format.bind(FMT_DA_COMPACT);
 
   const cards = [
     { icon:'⚙️', value: recipes.length, label:'Opskrifter', color:'var(--amber)', tab:'crafting' },
@@ -685,7 +709,7 @@ function renderDashboard(){
 function renderOverview(){
   const today = new Date().toISOString().slice(0,10);
   const weekdays = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
-  const fmt = n => new Intl.NumberFormat('da-DK').format(Math.round(n));
+  const fmt = n => fmtDA(Math.round(n));
 
   // ---- Kommende: fremtidige heists og møder, sorteret efter dato ----
   const upcoming = [];
@@ -835,7 +859,7 @@ function renderRecipeSelect(){
   select.innerHTML = filtered.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
   if(filtered.some(r=>r.id === prevValue)) select.value = prevValue;
 }
-document.getElementById('cl-search').addEventListener('input', renderRecipeSelect);
+document.getElementById('cl-search').addEventListener('input', debounce(renderRecipeSelect, 150));
 
 function renderRecipes(){
   const list = document.getElementById('recipe-list');
@@ -861,20 +885,24 @@ function renderRecipes(){
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${r.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
     </div>`).join('') + `</div>`;
   staggerCards(list);
-  list.querySelectorAll('button[data-edit]').forEach(btn=>{
-    btn.addEventListener('click', ()=> startEditRecipe(btn.dataset.edit));
-  });
-  list.querySelectorAll('button[data-id]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      recipes = recipes.filter(r=>r.id !== btn.dataset.id);
-      craftlist = craftlist.filter(c=>c.recipeId !== btn.dataset.id);
-      await saveKey('recipes', recipes);
-      if(editingRecipeId === btn.dataset.id) resetRecipeForm();
-      renderRecipes(); renderCraftlist();
-    });
-  });
 }
-document.getElementById('recipe-search').addEventListener('input', renderRecipes);
+document.getElementById('recipe-search').addEventListener('input', debounce(renderRecipes, 150));
+
+// Event delegation: one listener on the container, bound once, handles every
+// recipe card's buttons — even after renderRecipes() replaces the list's innerHTML.
+// This avoids re-attaching N listeners on every keystroke in the search box.
+document.getElementById('recipe-list').addEventListener('click', async (e)=>{
+  const editBtn = e.target.closest('button[data-edit]');
+  if(editBtn){ startEditRecipe(editBtn.dataset.edit); return; }
+  const delBtn = e.target.closest('button[data-id]');
+  if(delBtn){
+    recipes = recipes.filter(r=>r.id !== delBtn.dataset.id);
+    craftlist = craftlist.filter(c=>c.recipeId !== delBtn.dataset.id);
+    await saveKey('recipes', recipes);
+    if(editingRecipeId === delBtn.dataset.id) resetRecipeForm();
+    renderRecipes(); renderCraftlist();
+  }
+});
 
 // ---------- CRAFT LIST (multi-recipe totals) ----------
 document.getElementById('cl-add').addEventListener('click', ()=>{
@@ -990,97 +1018,86 @@ document.getElementById('dg-save').addEventListener('click', async ()=>{
     const d = drugs.find(x=>x.id===editingDrugId);
     if(d){ d.name = name; d.stock = stock; }
   } else {
-    drugs.push({id:uid(), name, stock, taken:0, sold:0, moneyReceived:0});
+    drugs.push({id:uid(), name, stock, takenLog:[]});
   }
   await saveKey('drugs', drugs);
   resetDrugForm();
   renderDrugs();
 });
 
-async function setTaken(id, value){
-  const d = drugs.find(x=>x.id===id);
-  if(!d) return;
-  d.taken = Math.max(0, value);
-  await saveKey('drugs', drugs);
-  renderDrugs();
-}
-
 function renderDrugs(){
   const list = document.getElementById('drug-list');
   document.getElementById('drug-count').textContent = drugs.length;
   if(drugs.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen bande-stoffer</h3><p>Tilføj jeres første vare ovenfor.</p></div>'; return; }
-  const fmt = n => new Intl.NumberFormat('da-DK').format(n);
   list.innerHTML = drugs.map(d=>{
-    const taken = d.taken || 0;
     const stock = d.stock || 0;
-    const moneyReceived = d.moneyReceived || 0;
+    const takenLog = d.takenLog || [];
+    const taken = takenLog.reduce((s,e)=> s + e.amount, 0);
+    const recentLog = [...takenLog].sort((a,b)=> b.date.localeCompare(a.date)).slice(0,5);
     return `<div class="bh-card" style="--stripe:var(--purple);">
       <p class="bh-card-name">${escapeHtml(d.name)}</p>
-      <p class="bh-card-meta">Taget: ${taken}</p>
+      <p class="bh-card-meta">Taget i alt: ${taken}</p>
 
       <div class="bh-field" style="margin-top:10px;"><label>Antal på lager</label>
         <input type="number" class="stock-input" data-id="${d.id}" min="0" step="1" value="${stock}">
       </div>
 
-      <div class="bh-field" style="margin-top:8px;"><label>Tilføj taget (produceret)</label>
-        <div style="display:flex;gap:8px;">
-          <input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20" style="flex:1;">
-          <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button">Tilføj</button>
-        </div>
+      <div class="bh-form-row bh-2col" style="margin-top:8px;">
+        <div class="bh-field"><label>Hvem</label><input type="text" class="taken-who" data-id="${d.id}" placeholder="F.eks. Snake"></div>
+        <div class="bh-field"><label>Antal taget</label><input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20"></div>
       </div>
-
-      <div class="bh-total-row" style="margin-top:8px;"><span>Penge modtaget i alt</span><span class="qty">${fmt(moneyReceived)} kr</span></div>
-      <div class="bh-field" style="margin-top:6px;"><label>Tilføj modtaget beløb</label>
-        <div style="display:flex;gap:8px;">
-          <input type="number" class="money-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 4500" style="flex:1;">
-          <button class="bh-btn bh-btn-ghost bh-btn-sm money-add" data-id="${d.id}" type="button">Tilføj</button>
-        </div>
-      </div>
+      <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button" style="margin-top:6px;">Tilføj</button>
+      ${recentLog.length ? `<div style="margin-top:8px;">${recentLog.map(e=>`<div class="bh-ov-meta" style="padding:2px 0;">${escapeHtml(e.who || 'Ukendt')} — ${e.amount} stk</div>`).join('')}</div>` : ''}
 
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${d.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
     </div>`;
   }).join('');
   staggerCards(list);
-  list.querySelectorAll('.stock-input').forEach(inp=>{
-    inp.addEventListener('change', async ()=>{
-      const d = drugs.find(x=>x.id===inp.dataset.id);
-      if(d){ d.stock = Math.max(0, parseInt(inp.value) || 0); await saveKey('drugs', drugs); renderDrugs(); }
-    });
-  });
-  list.querySelectorAll('.taken-add').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const input = list.querySelector(`.taken-input[data-id="${btn.dataset.id}"]`);
-      const amount = parseInt(input.value);
-      if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
-      const d = drugs.find(x=>x.id===btn.dataset.id);
-      if(d){ d.taken = (d.taken || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget (i alt: ${d.taken})`, 0xb98af2); }
-    });
-  });
-  list.querySelectorAll('.money-add').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const input = list.querySelector(`.money-input[data-id="${btn.dataset.id}"]`);
-      const amount = parseFloat(input.value);
-      if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
-      const d = drugs.find(x=>x.id===btn.dataset.id);
-      if(d){ d.moneyReceived = (d.moneyReceived || 0) + amount; await saveKey('drugs', drugs); renderDrugs(); renderDashboard(); sendWebhook('stoffer', '💊 Salg', `**${d.name}**: modtaget ${new Intl.NumberFormat('da-DK').format(amount)} kr (i alt: ${new Intl.NumberFormat('da-DK').format(d.moneyReceived)} kr)`, 0x35d68a); }
-    });
-  });
-  list.querySelectorAll('button[data-edit]').forEach(btn=>{
-    btn.addEventListener('click', ()=> startEditDrug(btn.dataset.edit));
-  });
-  list.querySelectorAll('button[data-del]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      drugs = drugs.filter(d=>d.id !== btn.dataset.del);
-      await saveKey('drugs', drugs);
-      if(editingDrugId === btn.dataset.del) resetDrugForm();
-      renderDrugs();
-    });
-  });
 }
+
+// Event delegation for the drug list: bound once outside the render function, so
+// re-rendering the list (which happens on every "taget" add) never needs to
+// re-attach a fresh set of listeners for every card.
+const drugList = document.getElementById('drug-list');
+drugList.addEventListener('change', async (e)=>{
+  const inp = e.target.closest('.stock-input');
+  if(!inp) return;
+  const d = drugs.find(x=>x.id===inp.dataset.id);
+  if(d){ d.stock = Math.max(0, parseInt(inp.value) || 0); await saveKey('drugs', drugs); renderDrugs(); }
+});
+drugList.addEventListener('click', async (e)=>{
+  const takenBtn = e.target.closest('.taken-add');
+  if(takenBtn){
+    const who = drugList.querySelector(`.taken-who[data-id="${takenBtn.dataset.id}"]`).value.trim();
+    const input = drugList.querySelector(`.taken-input[data-id="${takenBtn.dataset.id}"]`);
+    const amount = parseInt(input.value);
+    if(!who){ alert('Skriv hvem der har taget stofferne.'); return; }
+    if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
+    const d = drugs.find(x=>x.id===takenBtn.dataset.id);
+    if(d){
+      if(!d.takenLog) d.takenLog = [];
+      d.takenLog.push({ who, amount, date:new Date().toISOString() });
+      await saveKey('drugs', drugs);
+      renderDrugs(); renderDashboard();
+      const newTotal = d.takenLog.reduce((s,e2)=> s + e2.amount, 0);
+      sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal})`, 0xb98af2);
+    }
+    return;
+  }
+  const editBtn = e.target.closest('button[data-edit]');
+  if(editBtn){ startEditDrug(editBtn.dataset.edit); return; }
+  const delBtn = e.target.closest('button[data-del]');
+  if(delBtn){
+    drugs = drugs.filter(d=>d.id !== delBtn.dataset.del);
+    await saveKey('drugs', drugs);
+    if(editingDrugId === delBtn.dataset.del) resetDrugForm();
+    renderDrugs();
+  }
+});
 
 // ---------- HVIDVASK ----------
 let launders = [];
-const fmtKr = n => new Intl.NumberFormat('da-DK').format(Math.round(n));
+const fmtKr = n => fmtDA(Math.round(n));
 
 document.getElementById('lw-calc').addEventListener('click', async ()=>{
   const amount = parseFloat(document.getElementById('lw-amount').value);
@@ -1158,24 +1175,55 @@ document.getElementById('wh-save').addEventListener('click', async ()=>{
   setTimeout(()=>{ status.innerHTML = ''; }, 3000);
 });
 
+// ---------- ADMIN-LÅS (separat kode for Admin-fanen) ----------
+const ADMIN_CODE = 'Rcadmin123';
+const ADMIN_STORAGE_KEY = 'bh-admin-unlocked';
+
+function tryUnlockAdmin(){
+  if(sessionStorage.getItem(ADMIN_STORAGE_KEY) === '1'){
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    return true;
+  }
+  return false;
+}
+
+document.getElementById('admin-code-submit').addEventListener('click', ()=>{
+  const input = document.getElementById('admin-code-input');
+  const errorEl = document.getElementById('admin-code-error');
+  if(input.value === ADMIN_CODE){
+    sessionStorage.setItem(ADMIN_STORAGE_KEY, '1');
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+  } else {
+    errorEl.textContent = 'Forkert admin-kode.';
+    input.value = '';
+    input.focus();
+  }
+});
+document.getElementById('admin-code-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') document.getElementById('admin-code-submit').click();
+});
+
 // Fire-and-forget: sends a Discord embed to the configured webhook for a category.
 // Never blocks or throws into the caller — a failed notification should not stop the app.
-async function sendWebhook(category, title, description, color){
+async function sendWebhook(category, title, description, color, extra){
   const url = webhooks[category];
   if(!url) return;
   try{
+    const embed = {
+      title,
+      description,
+      color: color || 0xf2a93b,
+      footer: { text: gangName },
+      timestamp: new Date().toISOString(),
+    };
+    if(extra && extra.url) embed.url = extra.url;
+    if(extra && extra.fields) embed.fields = extra.fields;
     await fetch(url, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        embeds: [{
-          title,
-          description,
-          color: color || 0xf2a93b,
-          footer: { text: gangName },
-          timestamp: new Date().toISOString(),
-        }]
-      })
+      body: JSON.stringify({ embeds:[embed] })
     });
   }catch(e){ console.error('Discord webhook fejl', category, e); }
 }
@@ -1283,7 +1331,7 @@ document.getElementById('bm-save').addEventListener('click', async ()=>{
 function renderBlackmarket(){
   const list = document.getElementById('bm-list');
   document.getElementById('bm-count').textContent = blackmarket.length;
-  const fmt = n => new Intl.NumberFormat('da-DK').format(n);
+  const fmt = fmtDA;
 
   const query = (document.getElementById('bm-search').value || '').trim().toLowerCase();
   const filtered = query
@@ -1314,7 +1362,7 @@ function renderBlackmarket(){
     });
   });
 }
-document.getElementById('bm-search').addEventListener('input', renderBlackmarket);
+document.getElementById('bm-search').addEventListener('input', debounce(renderBlackmarket, 150));
 
 // ---------- HEIST-KALENDER ----------
 let calViewYear, calViewMonth, calSelectedDate = null;
@@ -1566,7 +1614,7 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
   document.getElementById('hs-suggest-result').innerHTML='';
   document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
   renderHeists(); renderCalendar(); renderDashboard();
-  sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 ${crew}` : ''}`, 0x4f9eea);
+  sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
 });
 
 function renderHeists(){
