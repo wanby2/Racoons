@@ -24,6 +24,1845 @@
     --disp:'Space Grotesk', system-ui, sans-serif;
   }
   *{box-sizing:border-box;}
+  html{scrollbar-color: var(--line) var(--bg); scroll-behavior:smooth;}
+  body{-webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2px solid var(--bg);}
+  ::-webkit-scrollbar-thumb:hover{background:#39485a;}
+  body{
+    margin:0;color:var(--text);font-family:var(--disp);min-height:100vh;position:relative;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,169,59,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,158,234,0.07), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  }
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  #bh-root{position:relative;z-index:1;}
+
+  #bh-loading{
+    position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:var(--bg);
+  }
+  #bh-loading.bh-hidden{display:none;}
+  .bh-loading-mark{
+    font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;color:var(--amber);
+    width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:rgba(242,169,59,0.1);position:relative;
+  }
+  .bh-loading-ring{
+    position:absolute;width:74px;height:74px;border-radius:50%;
+    border:2px solid transparent;border-top-color:var(--amber);border-right-color:rgba(242,169,59,0.3);
+    animation:bh-spin 1s linear infinite;
+  }
+  @keyframes bh-spin{to{transform:rotate(360deg);}}
+  .bh-loading-text{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.5px;margin-top:44px;}
+  .bh-loading-dots span{animation:bh-dot-fade 1.4s infinite; opacity:0;}
+  .bh-loading-dots span:nth-child(1){animation-delay:0s;}
+  .bh-loading-dots span:nth-child(2){animation-delay:.2s;}
+  .bh-loading-dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes bh-dot-fade{0%,80%,100%{opacity:0;}40%{opacity:1;}}
+  button, input, select, textarea{font-family:var(--disp);}
+
+  #bh-root{max-width:1080px;margin:0 auto;}
+
+  .bh-topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:16px 24px;background:linear-gradient(180deg,#141b23,#10151b);
+    border-bottom:1px solid var(--line);flex-wrap:wrap;
+    position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
+    box-shadow:0 8px 24px -12px rgba(0,0,0,0.6);
+  }
+  .bh-brand{display:flex;align-items:center;gap:12px;}
+  .bh-brand-mark{
+    width:34px;height:34px;border-radius:8px;background:linear-gradient(145deg, #ffcf7a, var(--amber));color:#1a1206;
+    font-weight:700;font-family:var(--mono);display:flex;align-items:center;justify-content:center;
+    font-size:12px;letter-spacing:-0.5px;box-shadow:0 0 0 3px rgba(242,169,59,0.15), 0 4px 14px -4px rgba(242,169,59,0.55);flex-shrink:0;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .bh-brand-mark:hover{transform:rotate(-4deg) scale(1.05);box-shadow:0 0 0 3px rgba(242,169,59,0.22), 0 6px 18px -4px rgba(242,169,59,0.7);}
+  .bh-brand-text h1{margin:0;font-size:16px;font-weight:700;letter-spacing:.2px;}
+  .bh-name-input{
+    background:transparent;border:none;color:var(--text);font-family:var(--disp);
+    font-size:16px;font-weight:700;letter-spacing:.2px;padding:0;outline:none;width:220px;
+  }
+  .bh-name-input:focus{border-bottom:1px solid var(--amber);}
+  .bh-brand-text p{margin:0;font-size:11px;color:var(--text-dim);font-family:var(--mono);letter-spacing:.3px;}
+
+  .bh-tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;flex-wrap:wrap;}
+  .bh-tab{border:none;background:transparent;color:var(--text-dim);padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .18s ease, color .18s ease, transform .12s ease;}
+  .bh-tab.active{background:var(--amber);color:#1a1206;box-shadow:0 2px 10px -2px rgba(242,169,59,0.5);}
+  .bh-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,0.04);}
+  .bh-tab:active{transform:scale(0.96);}
+
+  .bh-count-pill{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--line);padding:5px 10px;border-radius:20px;background:var(--panel);white-space:nowrap;}
+  .bh-shared-note{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:8px 24px 0;display:flex;align-items:center;gap:6px;}
+  .bh-shared-note .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;box-shadow:0 0 0 0 rgba(53,214,138,0.6);animation:bh-pulse 2.2s infinite;}
+  @keyframes bh-pulse{
+    0%{box-shadow:0 0 0 0 rgba(53,214,138,0.55);}
+    70%{box-shadow:0 0 0 6px rgba(53,214,138,0);}
+    100%{box-shadow:0 0 0 0 rgba(53,214,138,0);}
+  }
+
+  .bh-body{padding:20px 24px 40px;}
+
+  .bh-dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 24px 6px;}
+  .bh-dash-card{
+    background:linear-gradient(160deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:13px 15px;
+    display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    cursor:pointer;
+  }
+  .bh-dash-card:hover{transform:translateY(-2px);border-color:var(--dash-color,var(--amber));box-shadow:0 10px 22px -14px var(--dash-color,rgba(242,169,59,0.6));}
+  .bh-dash-card::after{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;background:var(--dash-color,var(--amber));opacity:.12;filter:blur(6px);}
+  .bh-dash-icon{font-size:16px;line-height:1;}
+  .bh-dash-value{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:.2px;
+    background:linear-gradient(135deg, var(--text) 40%, var(--dash-color, var(--amber)));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .bh-dash-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;font-family:var(--mono);}
+
+  .bh-panel{animation:bh-fade-in .28s ease;}
+  @keyframes bh-fade-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .bh-card{animation:bh-card-in .32s ease backwards;}
+  @keyframes bh-card-in{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  .bh-section-title{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin:26px 0 10px;display:flex;align-items:center;gap:8px;}
+  .bh-section-title:first-child{margin-top:0;}
+  .bh-section-title::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--amber);flex-shrink:0;}
+  .bh-section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg, var(--line), transparent);}
+
+  .bh-form-panel{background:var(--panel-raised);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 0 rgba(255,255,255,0.02) inset, 0 10px 26px -18px rgba(0,0,0,0.7);transition:border-color .2s ease;}
+  .bh-form-panel:focus-within{border-color:#3a4a5c;}
+  .bh-form-title{font-size:13px;font-weight:700;margin:0 0 14px;color:var(--text);}
+  .bh-form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+  .bh-form-row.bh-2col{grid-template-columns:1fr 1fr;}
+  @media (max-width:640px){.bh-form-row{grid-template-columns:1fr;}}
+  .bh-field label{display:block;font-size:10.5px;font-family:var(--mono);color:var(--text-dim);margin-bottom:5px;letter-spacing:.3px;text-transform:uppercase;}
+  .bh-field input, .bh-field select, .bh-field textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+    padding:9px 11px;border-radius:8px;font-size:13px;outline:none;transition:border-color .16s ease, box-shadow .16s ease;
+  }
+  .bh-field textarea{resize:vertical;min-height:56px;font-family:var(--disp);}
+  .bh-field input:focus, .bh-field select:focus, .bh-field textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(242,169,59,0.14);}
+  .bh-form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+
+  .bh-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer;transition:transform .08s ease, filter .12s ease, box-shadow .18s ease;}
+  .bh-btn:active{transform:scale(0.97);}
+  .bh-btn-primary{background:linear-gradient(155deg, #ffc36b, var(--amber));color:#1a1206;box-shadow:0 3px 12px -4px rgba(242,169,59,0.6);position:relative;overflow:hidden;}
+  .bh-btn-primary::before{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg, transparent, rgba(255,255,255,0.45), transparent);transform:skewX(-20deg);transition:left .5s ease;}
+  .bh-btn-primary:hover::before{left:130%;}
+  .bh-btn-primary:hover{filter:brightness(1.08);box-shadow:0 4px 16px -3px rgba(242,169,59,0.75);}
+  .bh-btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--line);}
+  .bh-btn-ghost:hover{color:var(--text);border-color:#39485a;background:rgba(255,255,255,0.03);}
+  .bh-btn-danger{background:rgba(229,85,95,0.12);color:var(--red);border:1px solid rgba(229,85,95,0.35);}
+  .bh-btn-danger:hover{background:rgba(229,85,95,0.2);box-shadow:0 2px 12px -4px rgba(229,85,95,0.5);}
+  .bh-btn-sm{padding:6px 11px;font-size:11.5px;}
+
+  .bh-ing-row, .bh-item-row{display:grid;grid-template-columns:1fr 90px 30px;gap:8px;margin-bottom:6px;align-items:center;}
+  .bh-item-row{grid-template-columns:auto 1fr 70px 30px;}
+  .bh-chk{width:17px;height:17px;accent-color:var(--green);cursor:pointer;}
+  .bh-remove-x{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text-faint);font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .bh-remove-x:hover{color:var(--red);border-color:rgba(229,85,95,0.4);background:rgba(229,85,95,0.08);}
+
+  .bh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+  .bh-card{
+    background:linear-gradient(165deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;overflow:hidden;
+    box-shadow:0 10px 24px -18px rgba(0,0,0,0.8);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .bh-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px -16px var(--stripe, rgba(0,0,0,0.85));border-color:#33404f;}
+  .bh-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,var(--text-faint));box-shadow:0 0 12px 0 var(--stripe,transparent);}
+  .bh-card-name{font-weight:700;font-size:15px;margin:0 0 3px;}
+  .bh-card-meta{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.6;}
+  .bh-card-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:8px;}
+
+  .bh-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-family:var(--mono);padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.3px;}
+  .bh-badge-green{background:rgba(53,214,138,0.14);color:var(--green);box-shadow:0 0 10px -4px rgba(53,214,138,0.5);}
+  .bh-badge-red{background:rgba(229,85,95,0.12);color:var(--red);box-shadow:0 0 10px -4px rgba(229,85,95,0.5);}
+  .bh-badge-blue{background:rgba(79,158,234,0.14);color:var(--blue);box-shadow:0 0 10px -4px rgba(79,158,234,0.5);}
+  .bh-badge-purple{background:rgba(185,138,242,0.14);color:var(--purple);box-shadow:0 0 10px -4px rgba(185,138,242,0.5);}
+  .bh-badge-dim{background:rgba(142,160,179,0.1);color:var(--text-dim);}
+
+  .bh-progress-row{display:flex;align-items:center;gap:8px;margin:8px 0;}
+  .bh-progress-track{flex:1;height:6px;background:#0d1218;border-radius:4px;overflow:hidden;}
+  .bh-progress-fill{height:100%;background:linear-gradient(90deg, #ffc36b, var(--amber));border-radius:4px;transition:width .4s ease;box-shadow:0 0 8px 0 rgba(242,169,59,0.5);}
+  .bh-progress-label{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);min-width:34px;text-align:right;}
+
+  .bh-skill-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
+  .bh-skill-row:first-of-type{border-top:none;}
+
+  .bh-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-raised);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:11.5px;color:var(--text-dim);font-family:var(--mono);}
+
+  .bh-empty{text-align:center;padding:40px 20px;color:var(--text-dim);border:1px dashed var(--line);border-radius:12px;transition:border-color .2s ease;}
+  .bh-empty:hover{border-color:#3a4a5c;}
+  .bh-empty h3{color:var(--text);margin:6px 0 6px;font-size:14px;}
+  .bh-empty p{margin:0;font-size:12.5px;}
+
+  .bh-materials-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+  .bh-mat-chip{font-family:var(--mono);font-size:10.5px;padding:4px 10px;border-radius:20px;background:var(--panel-raised);border:1px solid var(--line);color:var(--text-dim);}
+
+  .bh-craftlist-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
+  .bh-craftlist-row:first-of-type{border-top:none;}
+
+  .bh-total-row{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-size:13px;}
+  .bh-total-row:first-of-type{border-top:none;}
+  .bh-total-row .qty{font-family:var(--mono);color:var(--amber);font-weight:600;}
+
+  .bh-stock-ctrl{display:flex;align-items:center;gap:8px;}
+  .bh-stock-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .bh-stock-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .bh-stock-val{font-family:var(--mono);font-size:14px;min-width:28px;text-align:center;color:var(--text);}
+
+  .bh-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .bh-cal-wd{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-align:center;padding:4px 0;letter-spacing:.3px;text-transform:uppercase;}
+  .bh-cal-day{position:relative;aspect-ratio:1/1;min-height:38px;border:1px solid var(--line);border-radius:7px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--text-dim);cursor:pointer;transition:transform .12s ease, border-color .15s ease, background .15s ease;}
+  .bh-cal-day.bh-cal-empty{border:none;background:transparent;cursor:default;}
+  .bh-cal-day.bh-cal-today{border-color:var(--amber);color:var(--text);box-shadow:0 0 0 1px rgba(242,169,59,0.25) inset;}
+  .bh-cal-day.bh-cal-has{background:rgba(242,169,59,0.1);border-color:rgba(242,169,59,0.4);color:var(--text);font-weight:600;}
+  .bh-cal-day.bh-cal-selected{outline:2px solid var(--amber);}
+  .bh-cal-day .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);position:absolute;bottom:5px;box-shadow:0 0 6px 0 var(--amber);}
+  .bh-cal-day .dot.st-green{background:var(--green);box-shadow:0 0 6px 0 var(--green);}
+  .bh-cal-day .dot.st-red{background:var(--red);box-shadow:0 0 6px 0 var(--red);}
+  .bh-cal-day:hover:not(.bh-cal-empty){border-color:var(--amber);transform:scale(1.05);}
+
+  .bh-cal-tooltip{
+    position:fixed;z-index:200;background:var(--panel-raised);border:1px solid var(--line);
+    border-radius:8px;padding:8px 11px;font-size:11.5px;color:var(--text);pointer-events:none;
+    box-shadow:0 10px 26px -10px rgba(0,0,0,0.75);max-width:220px;white-space:pre-line;
+    opacity:0;transform:translateY(4px);transition:opacity .12s ease, transform .12s ease;
+  }
+  .bh-cal-tooltip.bh-cal-tooltip-show{opacity:1;transform:translateY(0);}
+
+  .bh-ov-item{
+    display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line);
+  }
+  .bh-ov-item:first-of-type{border-top:none;}
+  .bh-ov-icon{
+    width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;flex-shrink:0;background:color-mix(in srgb, var(--ov-color, var(--amber)) 16%, transparent);
+    box-shadow:0 0 10px -4px var(--ov-color, var(--amber));
+  }
+  .bh-ov-body{flex:1;min-width:0;}
+  .bh-ov-title{font-size:13px;font-weight:600;color:var(--text);margin:0 0 2px;}
+  .bh-ov-meta{font-size:11.5px;color:var(--text-dim);font-family:var(--mono);}
+  .bh-ov-date{font-family:var(--mono);font-size:11px;color:var(--text-faint);white-space:nowrap;flex-shrink:0;padding-top:2px;}
+
+  ::placeholder{color:var(--text-faint);}
+
+  #bh-lock{
+    position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,169,59,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,158,234,0.07), transparent 55%),
+      var(--bg);
+    padding:20px;
+  }
+  #bh-lock.bh-hidden{display:none;}
+  .bh-lock-box{
+    width:100%;max-width:320px;text-align:center;background:var(--panel-raised);
+    border:1px solid var(--line);border-radius:14px;padding:32px 26px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,0.8);
+  }
+  .bh-lock-title{font-size:16px;font-weight:700;margin:2px 0 4px;}
+  .bh-lock-sub{font-size:12px;color:var(--text-dim);margin:0 0 18px;font-family:var(--mono);}
+  #bh-lock-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+    padding:11px 13px;border-radius:8px;font-size:14px;outline:none;text-align:center;letter-spacing:1px;
+    transition:border-color .16s ease, box-shadow .16s ease;
+  }
+  #bh-lock-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(242,169,59,0.14);}
+  .bh-lock-error{color:var(--red);font-size:12px;font-family:var(--mono);min-height:16px;margin:10px 0 0;}
+  .bh-lock-box.bh-shake{animation:bh-shake .35s ease;}
+  @keyframes bh-shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px);}
+    40%{transform:translateX(7px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(4px);}
+  }
+
+  @media (max-width:600px){
+    .bh-body{padding:16px;}
+    .bh-name-input{width:150px;font-size:14px;}
+  }
+</style>
+</head>
+<body>
+<div id="bh-lock">
+  <div class="bh-lock-box">
+    <div class="bh-brand-mark" style="width:44px;height:44px;font-size:14px;margin:0 auto 14px;">BHQ</div>
+    <div class="bh-lock-title">Bande HQ er låst</div>
+    <p class="bh-lock-sub">Indtast koden for at få adgang</p>
+    <input type="password" id="bh-lock-input" placeholder="Kode" autocomplete="off">
+    <button class="bh-btn bh-btn-primary" id="bh-lock-submit" type="button" style="width:100%;justify-content:center;margin-top:10px;">Lås op</button>
+    <p class="bh-lock-error" id="bh-lock-error"></p>
+  </div>
+</div>
+<div id="bh-loading" class="bh-hidden">
+  <div class="bh-loading-mark">BHQ</div>
+  <div class="bh-loading-ring"></div>
+  <p class="bh-loading-text">Henter data<span class="bh-loading-dots"><span>.</span><span>.</span><span>.</span></span></p>
+</div>
+
+<div id="bh-root">
+  <div class="bh-topbar">
+    <div class="bh-brand">
+      <div class="bh-brand-mark">BHQ</div>
+      <div class="bh-brand-text">
+        <input class="bh-name-input" id="gangName" value="MIN BANDE">
+        <p>FIVEM BANDESTYRING</p>
+      </div>
+    </div>
+    <div class="bh-tabs" id="bh-tabs">
+      <button class="bh-tab active" data-tab="overblik">📊 Overblik</button>
+      <button class="bh-tab" data-tab="crafting">⚙️ Crafting</button>
+      <button class="bh-tab" data-tab="stoffer">💊 Bande stoffer</button>
+      <button class="bh-tab" data-tab="hvidvask">💵 Hvidvask</button>
+      <button class="bh-tab" data-tab="bandekasse">🏦 Bandekasse</button>
+      <button class="bh-tab" data-tab="blackmarket">🕶️ Blackmarket</button>
+      <button class="bh-tab" data-tab="admin">🔐 Admin</button>
+      <button class="bh-tab" data-tab="heist">🎯 Heists</button>
+      <button class="bh-tab" data-tab="meetings">📋 Møder</button>
+    </div>
+    <div class="bh-count-pill" id="bh-count-pill">—</div>
+  </div>
+  <div class="bh-shared-note"><span class="dot"></span>Data deles med alle der åbner dette dokument.</div>
+
+  <div class="bh-dash" id="bh-dash"></div>
+
+  <div class="bh-body">
+
+    <!-- OVERBLIK -->
+    <div class="bh-panel" id="panel-overblik">
+      <div class="bh-section-title">Kommende</div>
+      <div id="ov-upcoming"></div>
+
+      <div class="bh-section-title">Seneste aktivitet</div>
+      <div id="ov-activity"></div>
+    </div>
+
+    <!-- CRAFTING -->
+    <div class="bh-panel" id="panel-crafting" style="display:none;">
+      <div class="bh-section-title">Craft-liste — beregn flere opskrifter samlet</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Vælg opskrift</label>
+            <input type="text" id="cl-search" placeholder="Søg opskrift..." style="margin-bottom:6px;">
+            <select id="cl-recipe"></select>
+          </div>
+          <div class="bh-field"><label>Ønsket antal (output)</label><input type="number" id="cl-qty" value="1" min="1"></div>
+        </div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
+        </div>
+        <div id="craftlist-rows"></div>
+        <div class="bh-form-row bh-2col" style="margin-top:10px;">
+          <div class="bh-field"><label>Spild — træk fra materialer (%)</label><input type="number" id="cl-percent" min="0" max="100" step="1" placeholder="F.eks. 10"></div>
+        </div>
+        <div class="bh-form-actions" style="margin-top:10px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-clear" type="button">Ryd liste</button>
+          <button class="bh-btn bh-btn-primary" id="cl-calc" type="button">Beregn total</button>
+        </div>
+      </div>
+      <div id="craftlist-total"></div>
+
+      <div class="bh-section-title">Ny opskrift</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Navn på craft</label><input type="text" id="rc-name" placeholder="F.eks. Metamfetamin"></div>
+          <div class="bh-field"><label>Output pr. batch</label><input type="number" id="rc-output" value="1" min="1"></div>
+        </div>
+        <div class="bh-field"><label>Ingredienser</label><div id="rc-ingredients"></div></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="rc-add-ing" type="button">+ Tilføj ingrediens</button>
+          <button class="bh-btn bh-btn-ghost" id="rc-cancel" type="button" style="display:none;">Annullér redigering</button>
+          <button class="bh-btn bh-btn-primary" id="rc-save" type="button">Gem opskrift</button>
+        </div>
+      </div>
+
+      <div class="bh-section-title">Gemte opskrifter <span class="bh-count-pill" id="recipe-count" style="margin-left:auto;"></span></div>
+      <div class="bh-field" style="margin-bottom:10px;"><input type="text" id="recipe-search" placeholder="Søg efter opskrift eller ingrediens..."></div>
+      <div id="recipe-list"></div>
+
+      <div class="bh-section-title">Materialer <span class="bh-count-pill" style="margin-left:auto;">Skriv i et felt for forslag</span></div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Nyt materiale</label><input type="text" id="mat-name" placeholder="F.eks. Titaniumplade"></div>
+        </div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="mat-save" type="button">Tilføj materiale</button></div>
+      </div>
+      <div class="bh-materials-wrap" id="materials-ref"></div>
+    </div>
+
+    <!-- STOFFER -->
+    <div class="bh-panel" id="panel-stoffer" style="display:none;">
+      <div class="bh-section-title">Tilføj bande-stof</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Navn</label><input type="text" id="dg-name" placeholder="F.eks. Kokain"></div>
+          <div class="bh-field"><label>Antal på lager</label><input type="number" id="dg-stock" value="0" min="0"></div>
+        </div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost" id="dg-cancel" type="button" style="display:none;">Annullér redigering</button>
+          <button class="bh-btn bh-btn-primary" id="dg-save" type="button">Tilføj stof</button>
+        </div>
+      </div>
+      <div class="bh-section-title">Bande stoffer <span class="bh-count-pill" id="drug-count" style="margin-left:auto;"></span></div>
+      <div id="drug-list" class="bh-grid"></div>
+    </div>
+
+    <!-- HVIDVASK -->
+    <div class="bh-panel" id="panel-hvidvask" style="display:none;">
+      <div class="bh-section-title">Vask penge</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Beløb (beskidt)</label><input type="number" id="lw-amount" min="0" step="1" placeholder="F.eks. 50000"></div>
+          <div class="bh-field"><label>Gebyr — trækkes fra (%)</label><input type="number" id="lw-percent" min="0" max="100" step="1" placeholder="F.eks. 15"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="lw-note" placeholder="F.eks. via Bahama Mamas"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="lw-calc" type="button">Beregn</button></div>
+      </div>
+      <div id="lw-result"></div>
+
+      <div class="bh-section-title">Historik <span class="bh-count-pill" id="lw-count" style="margin-left:auto;"></span></div>
+      <div id="lw-history"></div>
+    </div>
+
+    <!-- BANDEKASSE -->
+    <div class="bh-panel" id="panel-bandekasse" style="display:none;">
+      <div class="bh-section-title">Bandekasse</div>
+      <div class="bh-form-panel" style="text-align:center;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Nuværende saldo</div>
+        <div id="bk-balance" style="font-family:var(--mono);font-size:32px;font-weight:600;color:var(--green);"></div>
+      </div>
+
+      <div class="bh-section-title">Registrer transaktion</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Type</label>
+            <select id="bk-type">
+              <option value="indsæt">Indsæt penge</option>
+              <option value="udtag">Tag penge ud</option>
+            </select>
+          </div>
+          <div class="bh-field"><label>Beløb</label><input type="number" id="bk-amount" min="0" step="1" placeholder="F.eks. 15000"></div>
+        </div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Hvem</label><input type="text" id="bk-who" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Begrundelse</label><input type="text" id="bk-reason" placeholder="F.eks. Køb af udstyr til heist"></div>
+        </div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="bk-save" type="button">Registrer</button></div>
+      </div>
+
+      <div class="bh-section-title">Transaktionshistorik <span class="bh-count-pill" id="bk-count" style="margin-left:auto;"></span></div>
+      <div id="bk-history" class="bh-grid"></div>
+    </div>
+
+    <!-- BLACKMARKET -->
+    <div class="bh-panel" id="panel-blackmarket" style="display:none;">
+      <div class="bh-section-title">Tilføj item</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Item</label><input type="text" id="bm-name" placeholder="F.eks. Silencer"></div>
+          <div class="bh-field"><label>Pris</label><input type="number" id="bm-price" min="0" step="1" placeholder="F.eks. 12000"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="bm-note" placeholder="F.eks. Kontakt Rex"></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost" id="bm-cancel" type="button" style="display:none;">Annullér redigering</button>
+          <button class="bh-btn bh-btn-primary" id="bm-save" type="button">Tilføj item</button>
+        </div>
+      </div>
+
+      <div class="bh-section-title">Blackmarket <span class="bh-count-pill" id="bm-count" style="margin-left:auto;"></span></div>
+      <div class="bh-field" style="margin-bottom:10px;"><input type="text" id="bm-search" placeholder="Søg efter item..."></div>
+      <div id="bm-list" class="bh-grid"></div>
+    </div>
+
+    <!-- WEBHOOKS -->
+    <div class="bh-panel" id="panel-admin" style="display:none;">
+      <div id="admin-gate">
+        <div class="bh-section-title">Admin-adgang</div>
+        <div class="bh-form-panel" style="max-width:340px;">
+          <p class="bh-card-meta" style="margin-bottom:12px;">Denne fane kræver en separat admin-kode.</p>
+          <div class="bh-field"><label>Kode</label><input type="password" id="admin-code-input" placeholder="Admin-kode" autocomplete="off"></div>
+          <div class="bh-form-actions" style="margin-top:10px;"><button class="bh-btn bh-btn-primary" id="admin-code-submit" type="button">Lås op</button></div>
+          <p class="bh-lock-error" id="admin-code-error" style="text-align:left;margin:8px 0 0;"></p>
+        </div>
+      </div>
+
+      <div id="admin-content" style="display:none;">
+        <div class="bh-section-title">Discord webhooks</div>
+        <p class="bh-card-meta" style="margin-bottom:14px;">Indsæt en Discord webhook-URL pr. kategori, så sender Bande HQ automatisk en besked til den kanal, når noget sker. Lad et felt stå tomt for at slå notifikationer fra for den kategori. <a href="https://support.discord.com/hc/da/articles/228383668" target="_blank" rel="noopener" style="color:var(--amber);">Sådan opretter du en webhook i Discord →</a></p>
+        <div class="bh-form-panel">
+          <div class="bh-field"><label>💊 Bande stoffer</label><input type="text" id="wh-stoffer" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>💵 Hvidvask</label><input type="text" id="wh-hvidvask" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>🏦 Bandekasse</label><input type="text" id="wh-bandekasse" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>🎯 Heist</label><input type="text" id="wh-heist" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-field" style="margin-top:10px;"><label>📋 Møder</label><input type="text" id="wh-meetings" placeholder="https://discord.com/api/webhooks/..."></div>
+          <div class="bh-form-actions" style="margin-top:14px;"><button class="bh-btn bh-btn-primary" id="wh-save" type="button">Gem webhooks</button></div>
+        </div>
+        <div id="wh-status"></div>
+      </div>
+    </div>
+
+    <!-- HEIST -->
+    <div class="bh-panel" id="panel-heist" style="display:none;">
+      <div class="bh-section-title">Heist-kalender</div>
+      <div class="bh-form-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cal-prev" type="button">&larr;</button>
+          <div class="bh-form-title" id="cal-label" style="margin:0;"></div>
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cal-next" type="button">&rarr;</button>
+        </div>
+        <div id="cal-grid"></div>
+      </div>
+      <div id="cal-day-detail"></div>
+
+      <div class="bh-section-title">Tilgængelighed — hvornår kan folk?</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row">
+          <div class="bh-field"><label>Navn</label><input type="text" id="av-name" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Dato</label><input type="date" id="av-date"></div>
+        </div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Fra</label><input type="time" id="av-from"></div>
+          <div class="bh-field"><label>Til</label><input type="time" id="av-to"></div>
+        </div>
+        <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="av-note" placeholder="F.eks. Kun hvis det er Pacific Standard"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="av-save" type="button">Tilføj tid</button></div>
+      </div>
+      <div id="avail-wrap"></div>
+
+      <div class="bh-section-title">Planlæg heist</div>
+      <div class="bh-form-panel">
+        <div class="bh-field"><label>Heist navn</label><input type="text" id="hs-name" placeholder="F.eks. Pacific Standard"></div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Dato (valgfri)</label><input type="date" id="hs-date"></div>
+          <div class="bh-field"><label>Tid (valgfri)</label><input type="time" id="hs-time"></div>
+        </div>
+        <div class="bh-form-actions" style="margin-top:-4px;margin-bottom:6px;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="hs-suggest" type="button">Foreslå bedste dato</button>
+        </div>
+        <div id="hs-suggest-result"></div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Besætning (valgfri)</label><input type="text" id="hs-crew" placeholder="F.eks. Snake, Rex, Vixen"></div>
+          <div class="bh-field"><label>Status</label>
+            <select id="hs-status">
+              <option value="planlagt">Planlagt</option>
+              <option value="gennemført">Gennemført</option>
+              <option value="aflyst">Aflyst</option>
+            </select>
+          </div>
+        </div>
+        <div class="bh-field"><label>Nødvendige items</label><div id="hs-items"></div></div>
+        <div class="bh-form-actions">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm" id="hs-add-item" type="button">+ Tilføj item</button>
+          <button class="bh-btn bh-btn-primary" id="hs-save" type="button">Gem heist</button>
+        </div>
+      </div>
+      <div class="bh-section-title">Aktive heists <span class="bh-count-pill" id="heist-count" style="margin-left:auto;"></span></div>
+      <div id="heist-list" class="bh-grid"></div>
+    </div>
+
+    <!-- MEETINGS -->
+    <div class="bh-panel" id="panel-meetings" style="display:none;">
+      <div class="bh-section-title">Planlæg møde</div>
+      <div class="bh-form-panel">
+        <div class="bh-form-row">
+          <div class="bh-field"><label>Titel</label><input type="text" id="mt-title" placeholder="F.eks. Ugentlig briefing"></div>
+          <div class="bh-field"><label>Dato</label><input type="date" id="mt-date"></div>
+          <div class="bh-field"><label>Tid</label><input type="time" id="mt-time"></div>
+        </div>
+        <div class="bh-field"><label>Dagsorden / noter</label><textarea id="mt-agenda" placeholder="Hvad skal I nå igennem?"></textarea></div>
+        <div class="bh-field"><label>Deltagere</label><input type="text" id="mt-attendees" placeholder="F.eks. Snake, Rex, Vixen"></div>
+        <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="mt-save" type="button">Gem møde</button></div>
+      </div>
+      <div class="bh-section-title">Møder <span class="bh-count-pill" id="meeting-count" style="margin-left:auto;"></span></div>
+      <div id="meeting-list" class="bh-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<datalist id="materials-list"></datalist>
+<datalist id="components-list"></datalist>
+
+<script>
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const escapeAttr = s => String(s).replace(/"/g,'&quot;');
+const escapeHtml = s => String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// Shared number formatter (avoids constructing a new Intl.NumberFormat on every render)
+const FMT_DA = new Intl.NumberFormat('da-DK');
+const FMT_DA_COMPACT = new Intl.NumberFormat('da-DK', {notation:'compact', maximumFractionDigits:1});
+const fmtDA = n => FMT_DA.format(n);
+
+// Debounce: delays calling fn until `wait` ms after the last call — used on search
+// inputs so filtering doesn't re-render the list on every single keystroke.
+function debounce(fn, wait){
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+}
+
+// ===================== Firebase Realtime Database backend =====================
+// Sæt din Firebase "Database URL" ind her (slutter typisk på firebaseio.com
+// eller firebasedatabase.app). Se FIREBASE_SETUP.md for opsætningsvejledning.
+const FIREBASE_DB_URL = 'https://bandetab-9cbcc-default-rtdb.europe-west1.firebasedatabase.app/';
+
+function firebaseUrl(key){
+  return `${FIREBASE_DB_URL.replace(/\/$/, '')}/bande-hq/${encodeURIComponent(key)}.json`;
+}
+async function safeJson(res, context){
+  if(!res.ok){
+    throw new Error(`Firebase svarede med HTTP ${res.status} (${context}). Tjek Database-reglerne (skal tillade læsning/skrivning) og at Database URL er korrekt.`);
+  }
+  const text = await res.text();
+  if(text === ''){ return null; }
+  try{ return JSON.parse(text); }
+  catch(e){ throw new Error(`Uventet svar fra Firebase ved "${context}" (ikke gyldig JSON).`); }
+}
+
+async function loadKey(key, fallback){
+  try{
+    const res = await fetch(firebaseUrl(key));
+    const value = await safeJson(res, 'hent ' + key);
+    return value === null ? fallback : value;
+  }catch(e){ console.error('Firebase fejl (load)', key, e); return fallback; }
+}
+async function saveKey(key, value){
+  try{
+    const res = await fetch(firebaseUrl(key), {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(value)
+    });
+    await safeJson(res, 'gem ' + key);
+  }catch(e){ console.error('Firebase fejl (gem)', key, e); alert('Kunne ikke gemme til Firebase. Tjek din forbindelse eller Database-regler.'); }
+}
+
+const DEFAULT_MATERIALS = ["Råt kød","Tekstil","Klude","Sterile pakke","Bandage","Plaster","Ispose","Plastik","Tørret Hash","Metalisk skrot","Fjederstål","Batteripakke","Elektronisk skrot","Ledningsrulle","Gummi","Skruer","Hærdet stål","Forstærket stål","Smørremiddel base","Opløsningsmiddel","Kredsløb","Loddepakke","Refineret jern","Skruer & bolte","Smådele","Controller","Modstand","Kondensator","Krudt","Højladet krudt","Træ","Kulfiber","Ballistisk stof","Hacking-modul","Antenne-modul","Aluminiumplade"];
+let materials = [];
+
+function refreshComponentsList(){
+  const names = new Set(materials);
+  recipes.forEach(r => names.add(r.name));
+  document.getElementById('components-list').innerHTML = [...names].sort().map(m=>`<option value="${escapeAttr(m)}">`).join('');
+}
+
+function renderMaterials(){
+  document.getElementById('materials-list').innerHTML = materials.map(m=>`<option value="${escapeAttr(m)}">`).join('');
+  refreshComponentsList();
+  document.getElementById('materials-ref').innerHTML = materials.map(m=>`<span class="bh-mat-chip">${escapeHtml(m)}<button type="button" class="mat-remove" data-mat="${escapeAttr(m)}" style="background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:12px;margin-left:2px;line-height:1;">&times;</button></span>`).join('');
+  document.getElementById('materials-ref').querySelectorAll('.mat-remove').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      materials = materials.filter(m=>m !== btn.dataset.mat);
+      await saveKey('materials', materials);
+      renderMaterials();
+    });
+  });
+}
+document.getElementById('mat-save').addEventListener('click', async ()=>{
+  const input = document.getElementById('mat-name');
+  const name = input.value.trim();
+  if(!name){ alert('Skriv et navn på materialet.'); return; }
+  if(materials.includes(name)){ alert('Det materiale findes allerede.'); return; }
+  materials.push(name);
+  await saveKey('materials', materials);
+  input.value = '';
+  renderMaterials();
+});
+
+let recipes = [], heists = [], meetings = [], drugs = [];
+let craftlist = [];
+let gangName = 'MIN BANDE';
+
+// ---------- TABS ----------
+document.querySelectorAll('.bh-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.bh-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.bh-panel').forEach(x=>x.style.display='none');
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).style.display='block';
+    updateCountPill(t.dataset.tab);
+    if(t.dataset.tab === 'admin') tryUnlockAdmin();
+  });
+});
+function updateCountPill(tab){
+  const pill = document.getElementById('bh-count-pill');
+  const map = { overblik: `overblik`, crafting: `${recipes.length} opskrifter`, stoffer: `${drugs.length} bande-stoffer`, hvidvask: `${launders.length} vasket`, bandekasse: `${treasury.length} transaktioner`, blackmarket: `${blackmarket.length} items`, admin: `admin`, heist: `${heists.length} heists`, meetings: `${meetings.length} møder` };
+  pill.textContent = map[tab] || '—';
+}
+
+function staggerCards(container){
+  container.querySelectorAll('.bh-card').forEach((el, i)=>{ el.style.animationDelay = (i * 35) + 'ms'; });
+}
+
+function renderDashboard(){
+  const wrap = document.getElementById('bh-dash');
+  const today = new Date().toISOString().slice(0,10);
+  const nextHeist = heists.filter(h => h.date && h.date >= today && (h.status||'planlagt') === 'planlagt').sort((a,b)=> a.date.localeCompare(b.date))[0];
+  const nextMeeting = meetings.filter(m => m.date >= today).sort((a,b)=> a.date.localeCompare(b.date))[0];
+  const totalMoneyWashed = launders.reduce((s,l)=> s + (l.clean||0), 0);
+  const fmt = FMT_DA_COMPACT.format.bind(FMT_DA_COMPACT);
+
+  const cards = [
+    { icon:'⚙️', value: recipes.length, label:'Opskrifter', color:'var(--amber)', tab:'crafting' },
+    { icon:'💊', value: drugs.length, label:'Bande stoffer', color:'var(--purple)', tab:'stoffer' },
+    { icon:'🏦', value: fmt(treasuryBalance()) + ' kr', label:'Bandekasse', color:'var(--green)', tab:'bandekasse' },
+    { icon:'🎯', value: nextHeist ? nextHeist.date.slice(5) : '—', label: nextHeist ? 'Næste heist' : 'Ingen heist planlagt', color:'var(--blue)', tab:'heist' },
+    { icon:'📋', value: nextMeeting ? nextMeeting.date.slice(5) : '—', label: nextMeeting ? 'Næste møde' : 'Ingen møde planlagt', color:'var(--purple)', tab:'meetings' },
+  ];
+
+  wrap.innerHTML = cards.map(c=>`
+    <div class="bh-dash-card" style="--dash-color:${c.color};" data-goto="${c.tab}">
+      <span class="bh-dash-icon">${c.icon}</span>
+      <span class="bh-dash-value">${c.value}</span>
+      <span class="bh-dash-label">${c.label}</span>
+    </div>`).join('');
+
+  wrap.querySelectorAll('.bh-dash-card').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+      if(tabBtn) tabBtn.click();
+    });
+  });
+  renderOverview();
+}
+
+
+function renderOverview(){
+  const today = new Date().toISOString().slice(0,10);
+  const weekdays = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  const fmt = n => fmtDA(Math.round(n));
+
+  // ---- Kommende: fremtidige heists og møder, sorteret efter dato ----
+  const upcoming = [];
+  heists.forEach(h=>{
+    if(h.date && h.date >= today && (h.status||'planlagt') === 'planlagt'){
+      upcoming.push({ date:h.date, sortKey:h.date+(h.time||'00:00'), icon:'🎯', color:'var(--blue)',
+        title:h.name, meta:`Heist${h.time ? ' · ' + h.time : ''}${h.crew ? ' · ' + h.crew : ''}`, tab:'heist' });
+    }
+  });
+  meetings.forEach(m=>{
+    if(m.date >= today){
+      upcoming.push({ date:m.date, sortKey:m.date+(m.time||'00:00'), icon:'📋', color:'var(--purple)',
+        title:m.title, meta:`Møde${m.time ? ' · ' + m.time : ''}`, tab:'meetings' });
+    }
+  });
+  upcoming.sort((a,b)=> a.sortKey.localeCompare(b.sortKey));
+
+  const upWrap = document.getElementById('ov-upcoming');
+  if(upcoming.length === 0){
+    upWrap.innerHTML = '<div class="bh-empty"><h3>Intet planlagt lige nu</h3><p>Planlæg et heist eller møde, så dukker det op her.</p></div>';
+  } else {
+    upWrap.innerHTML = `<div class="bh-form-panel">` + upcoming.map(item=>{
+      const wd = weekdays[new Date(item.date+'T00:00:00').getDay()];
+      return `<div class="bh-ov-item" data-goto="${item.tab}" style="cursor:pointer;">
+        <div class="bh-ov-icon" style="--ov-color:${item.color};">${item.icon}</div>
+        <div class="bh-ov-body">
+          <p class="bh-ov-title">${escapeHtml(item.title)}</p>
+          <p class="bh-ov-meta">${item.meta}</p>
+        </div>
+        <div class="bh-ov-date">${wd.slice(0,3)} ${item.date}</div>
+      </div>`;
+    }).join('') + `</div>`;
+    upWrap.querySelectorAll('.bh-ov-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+        if(tabBtn) tabBtn.click();
+      });
+    });
+  }
+
+  // ---- Seneste aktivitet: hvidvask + bandekasse, sorteret nyest først ----
+  const activity = [];
+  launders.forEach(l=>{
+    activity.push({ ts:l.date, icon:'💵', color:'var(--green)',
+      title:`Vasket ${fmt(l.amount)} kr → ${fmt(l.clean)} kr`, meta:`Hvidvask${l.note ? ' · ' + l.note : ''}`, tab:'hvidvask' });
+  });
+  treasury.forEach(t=>{
+    const isDeposit = t.type !== 'udtag';
+    activity.push({ ts:t.date, icon:'🏦', color: isDeposit ? 'var(--green)' : 'var(--red)',
+      title:`${isDeposit ? '+' : '−'}${fmt(t.amount)} kr — ${t.reason}`, meta:`Bandekasse${t.who ? ' · ' + t.who : ''}`, tab:'bandekasse' });
+  });
+  activity.sort((a,b)=> b.ts.localeCompare(a.ts));
+  const recentActivity = activity.slice(0, 25);
+
+  const actWrap = document.getElementById('ov-activity');
+  if(recentActivity.length === 0){
+    actWrap.innerHTML = '<div class="bh-empty"><h3>Ingen aktivitet endnu</h3><p>Vask penge eller registrer en transaktion i bandekassen, så vises det her.</p></div>';
+  } else {
+    actWrap.innerHTML = `<div class="bh-form-panel">` + recentActivity.map(item=>{
+      const d = new Date(item.ts);
+      const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return `<div class="bh-ov-item" data-goto="${item.tab}" style="cursor:pointer;">
+        <div class="bh-ov-icon" style="--ov-color:${item.color};">${item.icon}</div>
+        <div class="bh-ov-body">
+          <p class="bh-ov-title">${item.title}</p>
+          <p class="bh-ov-meta">${item.meta}</p>
+        </div>
+        <div class="bh-ov-date">${dateStr}</div>
+      </div>`;
+    }).join('') + `</div>`;
+    actWrap.querySelectorAll('.bh-ov-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.goto}"]`);
+        if(tabBtn) tabBtn.click();
+      });
+    });
+  }
+}
+
+
+const gangInput = document.getElementById('gangName');
+gangInput.addEventListener('change', async ()=>{ gangName = gangInput.value.trim() || 'MIN BANDE'; await saveKey('gangname', gangName); });
+
+// ---------- CRAFTING: recipe form ----------
+function makeIngRow(name='', qty=''){
+  const div = document.createElement('div');
+  div.className = 'bh-ing-row';
+  div.innerHTML = `<input type="text" class="ing-name" placeholder="Ressource eller opskrift (f.eks. Slæde)" list="components-list" value="${escapeAttr(name)}">
+    <input type="number" class="ing-qty" placeholder="Antal" min="0" value="${qty}">
+    <button type="button" class="bh-remove-x ing-remove">&times;</button>`;
+  div.querySelector('.ing-remove').addEventListener('click', ()=> div.remove());
+  return div;
+}
+document.getElementById('rc-add-ing').addEventListener('click', ()=> document.getElementById('rc-ingredients').appendChild(makeIngRow()));
+document.getElementById('rc-ingredients').appendChild(makeIngRow());
+
+let editingRecipeId = null;
+function resetRecipeForm(){
+  editingRecipeId = null;
+  document.getElementById('rc-name').value=''; document.getElementById('rc-output').value=1;
+  document.getElementById('rc-ingredients').innerHTML=''; document.getElementById('rc-ingredients').appendChild(makeIngRow());
+  document.getElementById('rc-save').textContent = 'Gem opskrift';
+  document.getElementById('rc-cancel').style.display = 'none';
+}
+document.getElementById('rc-cancel').addEventListener('click', resetRecipeForm);
+
+function startEditRecipe(id){
+  const r = recipes.find(x=>x.id===id);
+  if(!r) return;
+  editingRecipeId = id;
+  document.getElementById('rc-name').value = r.name;
+  document.getElementById('rc-output').value = r.output;
+  document.getElementById('rc-ingredients').innerHTML = '';
+  r.ingredients.forEach(i=> document.getElementById('rc-ingredients').appendChild(makeIngRow(i.name, i.qty)));
+  document.getElementById('rc-save').textContent = 'Opdatér opskrift';
+  document.getElementById('rc-cancel').style.display = 'inline-flex';
+  document.getElementById('rc-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+document.getElementById('rc-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('rc-name').value.trim();
+  const output = parseFloat(document.getElementById('rc-output').value) || 1;
+  if(!name){ alert('Giv opskriften et navn.'); return; }
+  const ingredients = [];
+  document.querySelectorAll('#rc-ingredients .bh-ing-row').forEach(row=>{
+    const n = row.querySelector('.ing-name').value.trim();
+    const q = parseFloat(row.querySelector('.ing-qty').value);
+    if(n && q > 0) ingredients.push({name:n, qty:q});
+  });
+  if(ingredients.length === 0){ alert('Tilføj mindst én ingrediens.'); return; }
+  if(editingRecipeId){
+    const r = recipes.find(x=>x.id===editingRecipeId);
+    if(r){ r.name = name; r.output = output; r.ingredients = ingredients; }
+  } else {
+    recipes.push({id:uid(), name, output, ingredients});
+  }
+  await saveKey('recipes', recipes);
+  resetRecipeForm();
+  renderRecipes();
+});
+
+function renderRecipeSelect(){
+  const select = document.getElementById('cl-recipe');
+  const prevValue = select.value;
+  const query = (document.getElementById('cl-search').value || '').trim().toLowerCase();
+  const filtered = query ? recipes.filter(r => r.name.toLowerCase().includes(query)) : recipes;
+  select.innerHTML = filtered.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+  if(filtered.some(r=>r.id === prevValue)) select.value = prevValue;
+}
+document.getElementById('cl-search').addEventListener('input', debounce(renderRecipeSelect, 150));
+
+function renderRecipes(){
+  const list = document.getElementById('recipe-list');
+  document.getElementById('recipe-count').textContent = recipes.length;
+  renderRecipeSelect();
+  refreshComponentsList();
+
+  const query = (document.getElementById('recipe-search').value || '').trim().toLowerCase();
+  const filtered = query
+    ? recipes.filter(r => r.name.toLowerCase().includes(query) || r.ingredients.some(i => i.name.toLowerCase().includes(query)))
+    : recipes;
+
+  if(recipes.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen opskrifter</h3><p>Tilføj en opskrift ovenfor for at komme i gang.</p></div>'; return; }
+  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen opskrifter matcher "${escapeHtml(query)}".</p></div>`; return; }
+
+  list.innerHTML = `<div class="bh-grid">` + filtered.map(r=>`
+    <div class="bh-card" style="--stripe:var(--amber);">
+      <p class="bh-card-name">${escapeHtml(r.name)}</p>
+      <p class="bh-card-meta">Output: ${r.output} stk/batch<br>${r.ingredients.map(i=>{
+        const isSub = !!findRecipeByName(i.name);
+        return `${i.qty}&times; ${escapeHtml(i.name)}${isSub ? ' <span style="color:var(--amber);">(opskrift)</span>' : ''}`;
+      }).join(', ')}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${r.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${r.id}">Slet</button></div>
+    </div>`).join('') + `</div>`;
+  staggerCards(list);
+}
+document.getElementById('recipe-search').addEventListener('input', debounce(renderRecipes, 150));
+
+// Event delegation: one listener on the container, bound once, handles every
+// recipe card's buttons — even after renderRecipes() replaces the list's innerHTML.
+// This avoids re-attaching N listeners on every keystroke in the search box.
+document.getElementById('recipe-list').addEventListener('click', async (e)=>{
+  const editBtn = e.target.closest('button[data-edit]');
+  if(editBtn){ startEditRecipe(editBtn.dataset.edit); return; }
+  const delBtn = e.target.closest('button[data-id]');
+  if(delBtn){
+    recipes = recipes.filter(r=>r.id !== delBtn.dataset.id);
+    craftlist = craftlist.filter(c=>c.recipeId !== delBtn.dataset.id);
+    await saveKey('recipes', recipes);
+    if(editingRecipeId === delBtn.dataset.id) resetRecipeForm();
+    renderRecipes(); renderCraftlist();
+  }
+});
+
+// ---------- CRAFT LIST (multi-recipe totals) ----------
+document.getElementById('cl-add').addEventListener('click', ()=>{
+  const id = document.getElementById('cl-recipe').value;
+  const qty = parseFloat(document.getElementById('cl-qty').value) || 0;
+  const recipe = recipes.find(r=>r.id===id);
+  if(!recipe || qty <= 0){ alert('Vælg en opskrift og et antal.'); return; }
+  craftlist.push({recipeId:id, qty});
+  document.getElementById('cl-qty').value = 1;
+  renderCraftlist();
+});
+document.getElementById('cl-clear').addEventListener('click', ()=>{ craftlist = []; renderCraftlist(); document.getElementById('craftlist-total').innerHTML=''; });
+
+function renderCraftlist(){
+  const wrap = document.getElementById('craftlist-rows');
+  if(craftlist.length === 0){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = craftlist.map((c,idx)=>{
+    const r = recipes.find(x=>x.id===c.recipeId);
+    if(!r) return '';
+    return `<div class="bh-craftlist-row"><span>${escapeHtml(r.name)}</span><span style="display:flex;align-items:center;gap:10px;"><span class="qty" style="font-family:var(--mono);color:var(--amber);">&times;${c.qty}</span><button class="bh-remove-x" data-idx="${idx}">&times;</button></span></div>`;
+  }).join('');
+  wrap.querySelectorAll('button[data-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ craftlist.splice(parseInt(btn.dataset.idx),1); renderCraftlist(); });
+  });
+}
+
+function findRecipeByName(name){
+  const n = name.trim().toLowerCase();
+  return recipes.find(r => r.name.trim().toLowerCase() === n);
+}
+
+// Recursively expands an ingredient into raw materials by following sub-recipes
+// that share a name with an existing recipe. Also tracks which sub-recipes were
+// expanded (and how many of each were needed) so we can show that separately.
+function expandIngredient(name, qtyNeeded, totals, subcomponents, visited){
+  const subRecipe = findRecipeByName(name);
+  if(!subRecipe || visited.has(subRecipe.id)){
+    // Either a raw material, or a circular reference we refuse to follow further —
+    // in the circular case we just count it as-is to avoid an infinite loop.
+    totals[name] = (totals[name] || 0) + qtyNeeded;
+    return;
+  }
+  subcomponents[subRecipe.name] = (subcomponents[subRecipe.name] || 0) + qtyNeeded;
+  const batches = qtyNeeded / subRecipe.output;
+  const nextVisited = new Set(visited); nextVisited.add(subRecipe.id);
+  subRecipe.ingredients.forEach(ing=>{
+    expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, nextVisited);
+  });
+}
+
+document.getElementById('cl-calc').addEventListener('click', ()=>{
+  const out = document.getElementById('craftlist-total');
+  if(craftlist.length === 0){ out.innerHTML = '<div class="bh-empty"><h3>Tom liste</h3><p>Tilføj en eller flere opskrifter til listen først.</p></div>'; return; }
+  const totals = {};
+  const subcomponents = {};
+  craftlist.forEach(c=>{
+    const r = recipes.find(x=>x.id===c.recipeId);
+    if(!r) return;
+    const batches = c.qty / r.output;
+    const visited = new Set([r.id]);
+    r.ingredients.forEach(ing=>{
+      expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, visited);
+    });
+  });
+
+  const percentRaw = document.getElementById('cl-percent').value;
+  const hasPercent = percentRaw !== '';
+  const percent = hasPercent ? Math.max(0, Math.min(100, parseFloat(percentRaw))) : 0;
+
+  const rows = Object.keys(totals).sort().map(name=>{
+    const total = Math.ceil(totals[name]*100)/100;
+    if(!hasPercent || percent === 0){
+      return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+    }
+    const adjusted = Math.ceil(totals[name] * (1 - percent/100) * 100)/100;
+    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total} <span style="color:var(--text-faint);">&rarr;</span> <span style="color:var(--amber);">${adjusted}</span></span></div>`;
+  }).join('');
+  const subRows = Object.keys(subcomponents).sort().map(name=>{
+    const total = Math.ceil(subcomponents[name]*100)/100;
+    return `<div class="bh-total-row"><span>${escapeHtml(name)}</span><span class="qty">${total}</span></div>`;
+  }).join('');
+  const subBlock = subRows ? `<div class="bh-form-panel" style="margin-top:10px;"><div class="bh-form-title">Delkomponenter der skal craftes undervejs</div>${subRows}</div>` : '';
+  const percentNote = hasPercent && percent !== 0 ? `<p class="bh-card-meta" style="margin:0 0 8px;">${percent}% trukket fra: første tal er beregnet behov, pil viser materialebehovet efter fradrag.</p>` : '';
+  out.innerHTML = `<div class="bh-form-panel"><div class="bh-form-title">Samlet materialebehov (rå materialer)</div>${percentNote}${rows}</div>${subBlock}`;
+});
+
+// ---------- STOFFER ----------
+let editingDrugId = null;
+function resetDrugForm(){
+  editingDrugId = null;
+  document.getElementById('dg-name').value=''; document.getElementById('dg-stock').value='0';
+  document.getElementById('dg-save').textContent = 'Tilføj stof';
+  document.getElementById('dg-cancel').style.display = 'none';
+}
+document.getElementById('dg-cancel').addEventListener('click', resetDrugForm);
+
+function startEditDrug(id){
+  const d = drugs.find(x=>x.id===id);
+  if(!d) return;
+  editingDrugId = id;
+  document.getElementById('dg-name').value = d.name;
+  document.getElementById('dg-stock').value = d.stock || 0;
+  document.getElementById('dg-save').textContent = 'Opdatér stof';
+  document.getElementById('dg-cancel').style.display = 'inline-flex';
+  document.getElementById('dg-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+document.getElementById('dg-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('dg-name').value.trim();
+  const stock = parseInt(document.getElementById('dg-stock').value) || 0;
+  if(!name){ alert('Giv stoffet et navn.'); return; }
+  if(editingDrugId){
+    const d = drugs.find(x=>x.id===editingDrugId);
+    if(d){ d.name = name; d.stock = stock; }
+  } else {
+    drugs.push({id:uid(), name, stock, takenLog:[]});
+  }
+  await saveKey('drugs', drugs);
+  resetDrugForm();
+  renderDrugs();
+});
+
+function renderDrugs(){
+  const list = document.getElementById('drug-list');
+  document.getElementById('drug-count').textContent = drugs.length;
+  if(drugs.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen bande-stoffer</h3><p>Tilføj jeres første vare ovenfor.</p></div>'; return; }
+  list.innerHTML = drugs.map(d=>{
+    const stock = d.stock || 0;
+    const takenLog = d.takenLog || [];
+    const taken = takenLog.reduce((s,e)=> s + e.amount, 0);
+    const recentLog = [...takenLog].sort((a,b)=> b.date.localeCompare(a.date)).slice(0,5);
+    return `<div class="bh-card" style="--stripe:var(--purple);">
+      <p class="bh-card-name">${escapeHtml(d.name)}</p>
+      <p class="bh-card-meta">Taget i alt: ${taken}</p>
+
+      <div class="bh-field" style="margin-top:10px;"><label>Antal på lager</label>
+        <input type="number" class="stock-input" data-id="${d.id}" min="0" step="1" value="${stock}">
+      </div>
+
+      <div class="bh-form-row bh-2col" style="margin-top:8px;">
+        <div class="bh-field"><label>Hvem</label><input type="text" class="taken-who" data-id="${d.id}" placeholder="F.eks. Snake"></div>
+        <div class="bh-field"><label>Antal taget (trækkes fra lager)</label><input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20"></div>
+      </div>
+      <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button" style="margin-top:6px;">Tilføj</button>
+      ${recentLog.length ? `<div style="margin-top:8px;">${recentLog.map(e=>`<div class="bh-ov-meta" style="padding:2px 0;">${escapeHtml(e.who || 'Ukendt')} — ${e.amount} stk</div>`).join('')}</div>` : ''}
+
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${d.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-del="${d.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  staggerCards(list);
+}
+
+// Event delegation for the drug list: bound once outside the render function, so
+// re-rendering the list (which happens on every "taget" add) never needs to
+// re-attach a fresh set of listeners for every card.
+const drugList = document.getElementById('drug-list');
+drugList.addEventListener('change', async (e)=>{
+  const inp = e.target.closest('.stock-input');
+  if(!inp) return;
+  const d = drugs.find(x=>x.id===inp.dataset.id);
+  if(d){ d.stock = Math.max(0, parseInt(inp.value) || 0); await saveKey('drugs', drugs); renderDrugs(); }
+});
+drugList.addEventListener('click', async (e)=>{
+  const takenBtn = e.target.closest('.taken-add');
+  if(takenBtn){
+    const who = drugList.querySelector(`.taken-who[data-id="${takenBtn.dataset.id}"]`).value.trim();
+    const input = drugList.querySelector(`.taken-input[data-id="${takenBtn.dataset.id}"]`);
+    const amount = parseInt(input.value);
+    if(!who){ alert('Skriv hvem der har taget stofferne.'); return; }
+    if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
+    const d = drugs.find(x=>x.id===takenBtn.dataset.id);
+    if(d){
+      const currentStock = d.stock || 0;
+      if(amount > currentStock){
+        if(!confirm(`Der er kun ${currentStock} stk på lager. Vil du alligevel tage ${amount}? Lageret sættes til 0.`)) return;
+      }
+      d.stock = Math.max(0, currentStock - amount);
+      if(!d.takenLog) d.takenLog = [];
+      d.takenLog.push({ who, amount, date:new Date().toISOString() });
+      await saveKey('drugs', drugs);
+      renderDrugs(); renderDashboard();
+      const newTotal = d.takenLog.reduce((s,e2)=> s + e2.amount, 0);
+      sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal}) — lager: ${d.stock} tilbage`, 0xb98af2);
+    }
+    return;
+  }
+  const editBtn = e.target.closest('button[data-edit]');
+  if(editBtn){ startEditDrug(editBtn.dataset.edit); return; }
+  const delBtn = e.target.closest('button[data-del]');
+  if(delBtn){
+    drugs = drugs.filter(d=>d.id !== delBtn.dataset.del);
+    await saveKey('drugs', drugs);
+    if(editingDrugId === delBtn.dataset.del) resetDrugForm();
+    renderDrugs();
+  }
+});
+
+// ---------- HVIDVASK ----------
+let launders = [];
+const fmtKr = n => fmtDA(Math.round(n));
+
+document.getElementById('lw-calc').addEventListener('click', async ()=>{
+  const amount = parseFloat(document.getElementById('lw-amount').value);
+  const percent = parseFloat(document.getElementById('lw-percent').value);
+  const note = document.getElementById('lw-note').value.trim();
+  const out = document.getElementById('lw-result');
+  if(!amount || amount <= 0 || isNaN(percent) || percent < 0 || percent > 100){
+    alert('Udfyld et gyldigt beløb og en procent mellem 0 og 100.');
+    return;
+  }
+  const fee = amount * (percent / 100);
+  const clean = amount - fee;
+
+  out.innerHTML = `<div class="bh-form-panel">
+    <div class="bh-form-title">Resultat</div>
+    <div class="bh-total-row"><span>Beskidt beløb</span><span class="qty">${fmtKr(amount)} kr</span></div>
+    <div class="bh-total-row"><span>Gebyr</span><span class="qty">${percent}%</span></div>
+    <div class="bh-total-row"><span>Du skal have tilbage</span><span class="qty" style="color:var(--green);">${fmtKr(clean)} kr</span></div>
+    <div class="bh-total-row"><span>Går til gebyr/tab</span><span class="qty" style="color:var(--red);">${fmtKr(fee)} kr</span></div>
+  </div>`;
+
+  launders.push({id:uid(), amount, percent, clean, fee, note, date:new Date().toISOString()});
+  await saveKey('launders', launders);
+  renderLaunderHistory();
+  renderDashboard();
+  sendWebhook('hvidvask', '💵 Hvidvask', `${fmtKr(amount)} kr vasket (${percent}% gebyr) → **${fmtKr(clean)} kr** retur${note ? `\n${note}` : ''}`, 0x35d68a);
+});
+
+function renderLaunderHistory(){
+  const wrap = document.getElementById('lw-history');
+  document.getElementById('lw-count').textContent = launders.length;
+  if(launders.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen vask registreret endnu</h3><p>Beregn din første vask ovenfor.</p></div>'; return; }
+  const sorted = [...launders].sort((a,b)=> b.date.localeCompare(a.date));
+  wrap.innerHTML = `<div class="bh-grid">` + sorted.map(l=>{
+    const d = new Date(l.date);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="bh-card" style="--stripe:var(--green);">
+      <p class="bh-card-name">${fmtKr(l.amount)} kr &rarr; ${fmtKr(l.clean)} kr</p>
+      <p class="bh-card-meta">${l.percent}% gebyr &middot; ${dateStr}${l.note ? `<br>${escapeHtml(l.note)}` : ''}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${l.id}">Slet</button></div>
+    </div>`;
+  }).join('') + `</div>`;
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      launders = launders.filter(l=>l.id !== btn.dataset.id);
+      await saveKey('launders', launders);
+      renderLaunderHistory();
+      renderDashboard();
+    });
+  });
+}
+
+// ---------- WEBHOOKS (Discord) ----------
+let webhooks = {};
+
+function renderWebhookFields(){
+  document.getElementById('wh-stoffer').value = webhooks.stoffer || '';
+  document.getElementById('wh-hvidvask').value = webhooks.hvidvask || '';
+  document.getElementById('wh-bandekasse').value = webhooks.bandekasse || '';
+  document.getElementById('wh-heist').value = webhooks.heist || '';
+  document.getElementById('wh-meetings').value = webhooks.meetings || '';
+}
+
+document.getElementById('wh-save').addEventListener('click', async ()=>{
+  webhooks = {
+    stoffer: document.getElementById('wh-stoffer').value.trim(),
+    hvidvask: document.getElementById('wh-hvidvask').value.trim(),
+    bandekasse: document.getElementById('wh-bandekasse').value.trim(),
+    heist: document.getElementById('wh-heist').value.trim(),
+    meetings: document.getElementById('wh-meetings').value.trim(),
+  };
+  await saveKey('webhooks', webhooks);
+  const status = document.getElementById('wh-status');
+  status.innerHTML = '<p class="bh-card-meta" style="color:var(--green);">Webhooks gemt.</p>';
+  setTimeout(()=>{ status.innerHTML = ''; }, 3000);
+});
+
+// ---------- ADMIN-LÅS (separat kode for Admin-fanen) ----------
+const ADMIN_CODE = 'Rcadmin123';
+const ADMIN_STORAGE_KEY = 'bh-admin-unlocked';
+
+function tryUnlockAdmin(){
+  if(sessionStorage.getItem(ADMIN_STORAGE_KEY) === '1'){
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    return true;
+  }
+  return false;
+}
+
+document.getElementById('admin-code-submit').addEventListener('click', ()=>{
+  const input = document.getElementById('admin-code-input');
+  const errorEl = document.getElementById('admin-code-error');
+  if(input.value === ADMIN_CODE){
+    sessionStorage.setItem(ADMIN_STORAGE_KEY, '1');
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+  } else {
+    errorEl.textContent = 'Forkert admin-kode.';
+    input.value = '';
+    input.focus();
+  }
+});
+document.getElementById('admin-code-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') document.getElementById('admin-code-submit').click();
+});
+
+// Fire-and-forget: sends a Discord embed to the configured webhook for a category.
+// Never blocks or throws into the caller — a failed notification should not stop the app.
+async function sendWebhook(category, title, description, color, extra){
+  const url = webhooks[category];
+  if(!url) return;
+  try{
+    const embed = {
+      title,
+      description,
+      color: color || 0xf2a93b,
+      footer: { text: gangName },
+      timestamp: new Date().toISOString(),
+    };
+    if(extra && extra.url) embed.url = extra.url;
+    if(extra && extra.fields) embed.fields = extra.fields;
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ embeds:[embed] })
+    });
+  }catch(e){ console.error('Discord webhook fejl', category, e); }
+}
+
+// ---------- BANDEKASSE ----------
+let treasury = [];
+
+function treasuryBalance(){
+  return treasury.reduce((sum, t) => sum + (t.type === 'udtag' ? -t.amount : t.amount), 0);
+}
+
+document.getElementById('bk-save').addEventListener('click', async ()=>{
+  const type = document.getElementById('bk-type').value;
+  const amount = parseFloat(document.getElementById('bk-amount').value);
+  const who = document.getElementById('bk-who').value.trim();
+  const reason = document.getElementById('bk-reason').value.trim();
+  if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
+  if(!reason){ alert('Skriv en begrundelse.'); return; }
+  if(type === 'udtag' && amount > treasuryBalance()){
+    if(!confirm(`Kassen indeholder kun ${fmtKr(treasuryBalance())} kr. Vil du alligevel registrere udtaget?`)) return;
+  }
+  treasury.push({id:uid(), type, amount, who, reason, date:new Date().toISOString()});
+  await saveKey('treasury', treasury);
+  document.getElementById('bk-amount').value=''; document.getElementById('bk-who').value=''; document.getElementById('bk-reason').value=''; document.getElementById('bk-type').value='indsæt';
+  renderTreasury(); renderDashboard();
+  const isDeposit = type !== 'udtag';
+  sendWebhook('bandekasse', '🏦 Bandekasse', `${isDeposit ? '➕ Indsat' : '➖ Taget ud'}: **${fmtKr(amount)} kr**\n${reason}${who ? `\n— ${who}` : ''}\nNy saldo: ${fmtKr(treasuryBalance())} kr`, isDeposit ? 0x35d68a : 0xe5555f);
+});
+
+function renderTreasury(){
+  document.getElementById('bk-count').textContent = treasury.length;
+  const balance = treasuryBalance();
+  const balEl = document.getElementById('bk-balance');
+  balEl.textContent = `${fmtKr(balance)} kr`;
+  balEl.style.color = balance < 0 ? 'var(--red)' : 'var(--green)';
+
+  const wrap = document.getElementById('bk-history');
+  if(treasury.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen transaktioner endnu</h3><p>Registrer et indskud eller udtag ovenfor.</p></div>'; return; }
+  const sorted = [...treasury].sort((a,b)=> b.date.localeCompare(a.date));
+  wrap.innerHTML = sorted.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const isDeposit = t.type !== 'udtag';
+    return `<div class="bh-card" style="--stripe:${isDeposit ? 'var(--green)' : 'var(--red)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <p class="bh-card-name">${isDeposit ? '+' : '&minus;'}${fmtKr(t.amount)} kr</p>
+        <span class="bh-badge ${isDeposit ? 'bh-badge-green' : 'bh-badge-red'}">${isDeposit ? 'Indsat' : 'Udtaget'}</span>
+      </div>
+      <p class="bh-card-meta">${escapeHtml(t.reason)}${t.who ? `<br>${escapeHtml(t.who)}` : ''}<br>${dateStr}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${t.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  staggerCards(wrap);
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      treasury = treasury.filter(t=>t.id !== btn.dataset.id);
+      await saveKey('treasury', treasury);
+      renderTreasury(); renderDashboard();
+    });
+  });
+}
+
+// ---------- BLACKMARKET ----------
+let blackmarket = [];
+let editingBmId = null;
+
+function resetBmForm(){
+  editingBmId = null;
+  document.getElementById('bm-name').value=''; document.getElementById('bm-price').value=''; document.getElementById('bm-note').value='';
+  document.getElementById('bm-save').textContent = 'Tilføj item';
+  document.getElementById('bm-cancel').style.display = 'none';
+}
+document.getElementById('bm-cancel').addEventListener('click', resetBmForm);
+
+function startEditBm(id){
+  const item = blackmarket.find(x=>x.id===id);
+  if(!item) return;
+  editingBmId = id;
+  document.getElementById('bm-name').value = item.name;
+  document.getElementById('bm-price').value = item.price;
+  document.getElementById('bm-note').value = item.note || '';
+  document.getElementById('bm-save').textContent = 'Opdatér item';
+  document.getElementById('bm-cancel').style.display = 'inline-flex';
+  document.getElementById('bm-name').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+document.getElementById('bm-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('bm-name').value.trim();
+  const price = parseFloat(document.getElementById('bm-price').value);
+  const note = document.getElementById('bm-note').value.trim();
+  if(!name){ alert('Giv itemet et navn.'); return; }
+  if(isNaN(price) || price < 0){ alert('Skriv en gyldig pris.'); return; }
+  if(editingBmId){
+    const item = blackmarket.find(x=>x.id===editingBmId);
+    if(item){ item.name = name; item.price = price; item.note = note; }
+  } else {
+    blackmarket.push({id:uid(), name, price, note});
+  }
+  await saveKey('blackmarket', blackmarket);
+  resetBmForm();
+  renderBlackmarket();
+  renderDashboard();
+});
+
+function renderBlackmarket(){
+  const list = document.getElementById('bm-list');
+  document.getElementById('bm-count').textContent = blackmarket.length;
+  const fmt = fmtDA;
+
+  const query = (document.getElementById('bm-search').value || '').trim().toLowerCase();
+  const filtered = query
+    ? blackmarket.filter(i => i.name.toLowerCase().includes(query) || (i.note || '').toLowerCase().includes(query))
+    : blackmarket;
+
+  if(blackmarket.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen items endnu</h3><p>Tilføj jeres første blackmarket-item ovenfor.</p></div>'; return; }
+  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen items matcher "${escapeHtml(query)}".</p></div>`; return; }
+
+  const sorted = [...filtered].sort((a,b)=> a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(item=>`
+    <div class="bh-card" style="--stripe:var(--red);">
+      <p class="bh-card-name">${escapeHtml(item.name)}</p>
+      <p class="bh-card-meta">${fmt(item.price)} kr${item.note ? `<br>${escapeHtml(item.note)}` : ''}</p>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${item.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${item.id}">Slet</button></div>
+    </div>`).join('');
+  staggerCards(list);
+  list.querySelectorAll('button[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=> startEditBm(btn.dataset.edit));
+  });
+  list.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      blackmarket = blackmarket.filter(i=>i.id !== btn.dataset.id);
+      await saveKey('blackmarket', blackmarket);
+      if(editingBmId === btn.dataset.id) resetBmForm();
+      renderBlackmarket();
+      renderDashboard();
+    });
+  });
+}
+document.getElementById('bm-search').addEventListener('input', debounce(renderBlackmarket, 150));
+
+// ---------- HEIST-KALENDER ----------
+let calViewYear, calViewMonth, calSelectedDate = null;
+(function initCalDate(){ const n = new Date(); calViewYear = n.getFullYear(); calViewMonth = n.getMonth(); })();
+
+const MONTHS_DA = ['Januar','Februar','Marts','April','Maj','Juni','Juli','August','September','Oktober','November','December'];
+const WD_DA = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+
+document.getElementById('cal-prev').addEventListener('click', ()=>{
+  calViewMonth--; if(calViewMonth < 0){ calViewMonth = 11; calViewYear--; }
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', ()=>{
+  calViewMonth++; if(calViewMonth > 11){ calViewMonth = 0; calViewYear++; }
+  renderCalendar();
+});
+
+function heistsOnDate(dateStr){
+  return heists.filter(h => h.date === dateStr);
+}
+
+function renderCalendar(){
+  document.getElementById('cal-label').textContent = `${MONTHS_DA[calViewMonth]} ${calViewYear}`;
+  const grid = document.getElementById('cal-grid');
+  const first = new Date(calViewYear, calViewMonth, 1);
+  let startOffset = first.getDay() - 1; if(startOffset < 0) startOffset = 6; // Monday-first
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  let html = WD_DA.map(w=>`<div class="bh-cal-wd">${w}</div>`).join('');
+  for(let i=0;i<startOffset;i++) html += '<div class="bh-cal-day bh-cal-empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${calViewYear}-${String(calViewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayH = heistsOnDate(dateStr);
+    const has = dayH.length > 0;
+    let dotClass = '';
+    if(has){
+      const statuses = dayH.map(h=>h.status || 'planlagt');
+      if(statuses.every(s=>s==='gennemført')) dotClass = 'st-green';
+      else if(statuses.every(s=>s==='aflyst')) dotClass = 'st-red';
+    }
+    const cls = ['bh-cal-day'];
+    if(dateStr === todayStr) cls.push('bh-cal-today');
+    if(has) cls.push('bh-cal-has');
+    if(dateStr === calSelectedDate) cls.push('bh-cal-selected');
+    html += `<div class="${cls.join(' ')}" data-date="${dateStr}">${d}${has?`<span class="dot ${dotClass}"></span>`:''}</div>`;
+  }
+  grid.className = 'bh-cal-grid';
+  grid.innerHTML = html;
+  grid.querySelectorAll('.bh-cal-day:not(.bh-cal-empty)').forEach(el=>{
+    el.addEventListener('click', ()=>{ calSelectedDate = el.dataset.date; renderCalendar(); renderCalDayDetail(); });
+  });
+  wireCalTooltips(grid);
+  renderCalDayDetail();
+}
+
+let calTooltipEl = null;
+function wireCalTooltips(grid){
+  if(!calTooltipEl){
+    calTooltipEl = document.createElement('div');
+    calTooltipEl.className = 'bh-cal-tooltip';
+    document.body.appendChild(calTooltipEl);
+  }
+  grid.querySelectorAll('.bh-cal-day.bh-cal-has').forEach(el=>{
+    el.removeAttribute('title');
+    el.addEventListener('mouseenter', ()=>{
+      const dayH = heistsOnDate(el.dataset.date);
+      if(dayH.length === 0) return;
+      calTooltipEl.textContent = dayH.map(h=>`${h.name}${h.time ? ' · ' + h.time : ''} — ${h.status || 'planlagt'}`).join('\n');
+      calTooltipEl.classList.add('bh-cal-tooltip-show');
+    });
+    el.addEventListener('mousemove', (e)=>{
+      calTooltipEl.style.left = (e.clientX + 14) + 'px';
+      calTooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+    el.addEventListener('mouseleave', ()=>{
+      calTooltipEl.classList.remove('bh-cal-tooltip-show');
+    });
+  });
+}
+
+function renderCalDayDetail(){
+  const wrap = document.getElementById('cal-day-detail');
+  if(!calSelectedDate){ wrap.innerHTML = ''; return; }
+  const dayHeists = heistsOnDate(calSelectedDate);
+  const dayAvail = availability.filter(a=>a.date === calSelectedDate);
+  const wdName = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][new Date(calSelectedDate+'T00:00:00').getDay()];
+
+  const statusBadge = s => s==='gennemført' ? '<span class="bh-badge bh-badge-green">Gennemført</span>' : s==='aflyst' ? '<span class="bh-badge bh-badge-red">Aflyst</span>' : '<span class="bh-badge bh-badge-blue">Planlagt</span>';
+
+  const heistsHtml = dayHeists.length === 0 ? '<p class="bh-card-meta">Ingen heists planlagt denne dag endnu.</p>' :
+    dayHeists.map(h=>`<div class="bh-skill-row"><span>${escapeHtml(h.name)}${h.time ? ` &middot; ${h.time}` : ''} ${statusBadge(h.status || 'planlagt')}</span><span style="font-family:var(--mono);color:var(--text-dim);">${h.crew ? escapeHtml(h.crew) : ''}</span></div>`).join('');
+
+  const avHtml = dayAvail.length === 0 ? '<p class="bh-card-meta">Ingen har sagt "jeg kan" endnu.</p>' :
+    dayAvail.map(a=>`<div class="bh-skill-row"><span>${escapeHtml(a.name)}${a.note ? ` <span style="color:var(--text-faint);">&mdash; ${escapeHtml(a.note)}</span>` : ''}</span><span style="display:flex;align-items:center;gap:10px;"><span style="font-family:var(--mono);color:var(--amber);">${a.from}&ndash;${a.to}</span><button class="bh-remove-x" data-rsvp="${a.id}">&times;</button></span></div>`).join('');
+
+  wrap.innerHTML = `<div class="bh-form-panel">
+    <div class="bh-form-title">${wdName} ${calSelectedDate}</div>
+
+    <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Heists denne dag</div>
+    ${heistsHtml}
+
+    <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px;">Hvem kan denne dag</div>
+    ${avHtml}
+
+    <div class="bh-form-row bh-2col" style="margin-top:12px;">
+      <div class="bh-field"><label>Dit navn</label><input type="text" id="rsvp-name" placeholder="F.eks. Snake"></div>
+      <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="rsvp-note" placeholder="F.eks. kun aften"></div>
+    </div>
+    <div class="bh-form-actions">
+      <button class="bh-btn bh-btn-primary bh-btn-sm" id="rsvp-add" type="button">Jeg kan denne dag</button>
+      ${dayAvail.length > 0 ? `<button class="bh-btn bh-btn-ghost bh-btn-sm" id="rsvp-use-date" type="button">Brug dato + tilgængelige som besætning</button>` : ''}
+    </div>
+  </div>`;
+
+  wrap.querySelectorAll('button[data-rsvp]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      availability = availability.filter(a=>a.id !== btn.dataset.rsvp);
+      await saveKey('availability', availability);
+      renderAvailability(); renderCalDayDetail();
+    });
+  });
+
+  const rsvpBtn = document.getElementById('rsvp-add');
+  if(rsvpBtn) rsvpBtn.addEventListener('click', async ()=>{
+    const name = document.getElementById('rsvp-name').value.trim();
+    const note = document.getElementById('rsvp-note').value.trim();
+    if(!name){ alert('Skriv dit navn.'); return; }
+    availability.push({id:uid(), name, date:calSelectedDate, from:'00:00', to:'23:59', note});
+    availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
+    await saveKey('availability', availability);
+    renderAvailability(); renderCalendar(); renderCalDayDetail();
+  });
+
+  const useDateBtn = document.getElementById('rsvp-use-date');
+  if(useDateBtn) useDateBtn.addEventListener('click', ()=>{
+    document.getElementById('hs-date').value = calSelectedDate;
+    document.getElementById('hs-crew').value = [...new Set(dayAvail.map(a=>a.name))].join(', ');
+    document.getElementById('hs-name').scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+document.getElementById('hs-suggest').addEventListener('click', ()=>{
+  const out = document.getElementById('hs-suggest-result');
+  const today = new Date().toISOString().slice(0,10);
+  const counts = {};
+  availability.forEach(a=>{
+    if(a.date < today) return;
+    if(!counts[a.date]) counts[a.date] = new Set();
+    counts[a.date].add(a.name);
+  });
+  const dates = Object.keys(counts);
+  if(dates.length === 0){ out.innerHTML = '<p class="bh-card-meta" style="margin:6px 0 10px;">Ingen fremtidige tilgængelighedstider registreret endnu — bed folk om at udfylde tilgængelighed først.</p>'; return; }
+  dates.sort((a,b)=> counts[b].size - counts[a].size || a.localeCompare(b));
+  const best = dates[0];
+  const names = [...counts[best]];
+  document.getElementById('hs-date').value = best;
+  document.getElementById('hs-crew').value = names.join(', ');
+  const wdName = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'][new Date(best+'T00:00:00').getDay()];
+  out.innerHTML = `<p class="bh-card-meta" style="margin:6px 0 10px;">Bedste dato: <strong style="color:var(--amber);">${wdName} ${best}</strong> &mdash; ${names.length} tilgængelige (${escapeHtml(names.join(', '))}). Dato og besætning er udfyldt automatisk.</p>`;
+});
+
+// ---------- TILGÆNGELIGHED (heist-planlægger) ----------
+let availability = [];
+
+document.getElementById('av-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('av-name').value.trim();
+  const date = document.getElementById('av-date').value;
+  const from = document.getElementById('av-from').value;
+  const to = document.getElementById('av-to').value;
+  const note = document.getElementById('av-note').value.trim();
+  if(!name || !date || !from || !to){ alert('Udfyld navn, dato, fra-tid og til-tid.'); return; }
+  availability.push({id:uid(), name, date, from, to, note});
+  availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
+  await saveKey('availability', availability);
+  document.getElementById('av-name').value=''; document.getElementById('av-date').value='';
+  document.getElementById('av-from').value=''; document.getElementById('av-to').value=''; document.getElementById('av-note').value='';
+  renderAvailability();
+});
+
+function renderAvailability(){
+  const wrap = document.getElementById('avail-wrap');
+  if(availability.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen tider endnu</h3><p>Tilføj hvornår du kan deltage i et heist ovenfor.</p></div>'; return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const groups = {};
+  availability.forEach(a=>{ if(!groups[a.date]) groups[a.date] = []; groups[a.date].push(a); });
+  const dates = Object.keys(groups).sort();
+
+  const weekdays = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  wrap.innerHTML = dates.map(date=>{
+    const wd = weekdays[new Date(date+'T00:00:00').getDay()];
+    const past = date < today;
+    const rows = groups[date].map(a=>`
+      <div class="bh-skill-row">
+        <span>${escapeHtml(a.name)}${a.note ? ` <span style="color:var(--text-faint);">&mdash; ${escapeHtml(a.note)}</span>` : ''}</span>
+        <span style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--mono);color:var(--amber);">${a.from}&ndash;${a.to}</span>
+          <button class="bh-remove-x" data-id="${a.id}">&times;</button>
+        </span>
+      </div>`).join('');
+    return `<div class="bh-form-panel" style="${past?'opacity:.55;':''}">
+      <div class="bh-form-title">${wd} &middot; ${date}${past ? ' <span class="bh-badge bh-badge-dim" style="margin-left:6px;">Overstået</span>' : ''}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      availability = availability.filter(a=>a.id !== btn.dataset.id);
+      await saveKey('availability', availability);
+      renderAvailability();
+    });
+  });
+}
+
+// ---------- HEIST ----------
+function makeItemRow(name='', qty=1, gathered=false){
+  const div = document.createElement('div');
+  div.className = 'bh-item-row';
+  div.innerHTML = `<input type="checkbox" class="bh-chk item-gathered" ${gathered?'checked':''}>
+    <input type="text" class="item-name" placeholder="Item" value="${escapeAttr(name)}">
+    <input type="number" class="item-qty" placeholder="Antal" min="1" value="${qty}">
+    <button type="button" class="bh-remove-x item-remove">&times;</button>`;
+  div.querySelector('.item-remove').addEventListener('click', ()=> div.remove());
+  return div;
+}
+document.getElementById('hs-add-item').addEventListener('click', ()=> document.getElementById('hs-items').appendChild(makeItemRow()));
+document.getElementById('hs-items').appendChild(makeItemRow());
+
+document.getElementById('hs-save').addEventListener('click', async ()=>{
+  const name = document.getElementById('hs-name').value.trim();
+  const date = document.getElementById('hs-date').value;
+  const time = document.getElementById('hs-time').value;
+  const crew = document.getElementById('hs-crew').value.trim();
+  const status = document.getElementById('hs-status').value;
+  if(!name){ alert('Giv heistet et navn.'); return; }
+  const items = [];
+  document.querySelectorAll('#hs-items .bh-item-row').forEach(row=>{
+    const n = row.querySelector('.item-name').value.trim();
+    const q = parseInt(row.querySelector('.item-qty').value) || 1;
+    const g = row.querySelector('.item-gathered').checked;
+    if(n) items.push({name:n, qty:q, gathered:g});
+  });
+  if(items.length === 0){ alert('Tilføj mindst ét item.'); return; }
+  heists.push({id:uid(), name, date, time, crew, status, items});
+  await saveKey('heists', heists);
+  document.getElementById('hs-name').value=''; document.getElementById('hs-date').value=''; document.getElementById('hs-time').value=''; document.getElementById('hs-crew').value=''; document.getElementById('hs-status').value='planlagt';
+  document.getElementById('hs-suggest-result').innerHTML='';
+  document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
+  renderHeists(); renderCalendar(); renderDashboard();
+  sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
+});
+
+function renderHeists(){
+  const list = document.getElementById('heist-list');
+  document.getElementById('heist-count').textContent = heists.length;
+  if(heists.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen heists</h3><p>Planlæg dit første heist ovenfor.</p></div>'; return; }
+  const statusStripe = s => s==='gennemført' ? 'var(--green)' : s==='aflyst' ? 'var(--red)' : 'var(--blue)';
+  const statusBadge = s => s==='gennemført' ? '<span class="bh-badge bh-badge-green">Gennemført</span>' : s==='aflyst' ? '<span class="bh-badge bh-badge-red">Aflyst</span>' : '<span class="bh-badge bh-badge-blue">Planlagt</span>';
+  list.innerHTML = heists.map(h=>{
+    const done = h.items.filter(i=>i.gathered).length;
+    const pct = Math.round((done / h.items.length) * 100);
+    const status = h.status || 'planlagt';
+    return `<div class="bh-card" style="--stripe:${statusStripe(status)};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <p class="bh-card-name">${escapeHtml(h.name)}</p>
+        ${statusBadge(status)}
+      </div>
+      <p class="bh-card-meta">${h.date ? `${h.date}${h.time ? ' · ' + h.time : ''}` : 'Ingen dato sat'}${h.crew ? `<br>Besætning: ${escapeHtml(h.crew)}` : ''}</p>
+      <p class="bh-card-meta">${done}/${h.items.length} items klar</p>
+      ${h.items.map((it,idx)=>`<div class="bh-skill-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;"><input type="checkbox" class="bh-chk hs-toggle" data-hid="${h.id}" data-idx="${idx}" ${it.gathered?'checked':''}><span style="${it.gathered?'color:var(--green);text-decoration:line-through;':''}">${escapeHtml(it.name)}</span></label><span style="font-family:var(--mono);color:var(--text-dim);">&times;${it.qty}</span></div>`).join('')}
+      <div class="bh-progress-row"><div class="bh-progress-track"><div class="bh-progress-fill" style="width:${pct}%;"></div></div><div class="bh-progress-label">${pct}%</div></div>
+      <div class="bh-field" style="margin-top:8px;"><label>Status</label>
+        <select class="hs-status-change" data-hid="${h.id}">
+          <option value="planlagt" ${status==='planlagt'?'selected':''}>Planlagt</option>
+          <option value="gennemført" ${status==='gennemført'?'selected':''}>Gennemført</option>
+          <option value="aflyst" ${status==='aflyst'?'selected':''}>Aflyst</option>
+        </select>
+      </div>
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm hs-delete" data-hid="${h.id}">Slet</button></div>
+    </div>`;
+  }).join('');
+  staggerCards(list);
+  list.querySelectorAll('.hs-toggle').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const h = heists.find(x=>x.id===cb.dataset.hid);
+      h.items[parseInt(cb.dataset.idx)].gathered = cb.checked;
+      await saveKey('heists', heists); renderHeists();
+    });
+  });
+  list.querySelectorAll('.hs-status-change').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const h = heists.find(x=>x.id===sel.dataset.hid);
+      if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard();
+        const statusIcon = { planlagt:'📅', 'gennemført':'✅', aflyst:'❌' }[h.status] || '📅';
+        sendWebhook('heist', `${statusIcon} Heist opdateret`, `**${h.name}** er nu markeret som **${h.status}**`, h.status==='gennemført' ? 0x35d68a : h.status==='aflyst' ? 0xe5555f : 0x4f9eea);
+      }
+    });
+  });
+  list.querySelectorAll('.hs-delete').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); });
+  });
+}
+
+// ---------- MEETINGS ----------
+document.getElementById('mt-save').addEventListener('click', async ()=>{
+  const title = document.getElementById('mt-title').value.trim();
+  const date = document.getElementById('mt-date').value;
+  const time = document.getElementById('mt-time').value;
+  const agenda = document.getElementById('mt-agenda').value.trim();
+  const attendees = document.getElementById('mt-attendees').value.trim();
+  if(!title || !date){ alert('Giv mødet en titel og en dato.'); return; }
+  meetings.push({id:uid(), title, date, time, agenda, attendees});
+  meetings.sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  await saveKey('meetings', meetings);
+  document.getElementById('mt-title').value=''; document.getElementById('mt-date').value=''; document.getElementById('mt-time').value=''; document.getElementById('mt-agenda').value=''; document.getElementById('mt-attendees').value='';
+  renderMeetings();
+  renderDashboard();
+  sendWebhook('meetings', '📋 Nyt møde', `**${title}**\n📅 ${date}${time ? ' · ' + time : ''}${agenda ? `\n${agenda}` : ''}${attendees ? `\n👥 ${attendees}` : ''}`, 0xb98af2);
+});
+function renderMeetings(){
+  const list = document.getElementById('meeting-list');
+  document.getElementById('meeting-count').textContent = meetings.length;
+  if(meetings.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen møder</h3><p>Planlæg jeres første møde ovenfor.</p></div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  list.innerHTML = meetings.map(m=>`
+    <div class="bh-card" style="--stripe:var(--purple);">
+      <p class="bh-card-name">${escapeHtml(m.title)}</p>
+      <p class="bh-card-meta">${m.date}${m.time ? ' · ' + m.time : ''}</p>
+      ${m.date < today ? '<span class="bh-badge bh-badge-dim">Afholdt</span>' : '<span class="bh-badge bh-badge-purple">Kommende</span>'}
+      ${m.agenda ? `<p class="bh-card-meta" style="margin-top:8px;white-space:pre-wrap;">${escapeHtml(m.agenda)}</p>` : ''}
+      ${m.attendees ? `<p class="bh-card-meta">Deltagere: ${escapeHtml(m.attendees)}</p>` : ''}
+      <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${m.id}">Slet</button></div>
+    </div>`).join('');
+  staggerCards(list);
+  list.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ meetings = meetings.filter(m=>m.id !== btn.dataset.id); await saveKey('meetings', meetings); renderMeetings(); renderDashboard(); });
+  });
+}
+
+// ---------- INIT ----------
+async function init(){
+  const loadingEl = document.getElementById('bh-loading');
+  if(!FIREBASE_DB_URL || FIREBASE_DB_URL.indexOf('http') !== 0){
+    loadingEl.classList.add('bh-hidden');
+    document.getElementById('bh-root').innerHTML = `
+      <div class="bh-body">
+        <div class="bh-empty" style="text-align:left;padding:24px;">
+          <h3>Opsætning mangler</h3>
+          <p style="margin-bottom:10px;">Denne app skal forbindes til en Firebase Realtime Database, før den kan gemme data.</p>
+          <p style="margin-bottom:10px;">Find linjen <code style="color:var(--amber);">const FIREBASE_DB_URL = '...'</code> øverst i filens kode, og sæt din Firebase "Database URL" ind der (se FIREBASE_SETUP.md for vejledning).</p>
+          <p>Gem filen igen, og genindlæs siden.</p>
+        </div>
+      </div>`;
+    return;
+  }
+  try{
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Tidsudløb: Firebase svarede ikke inden for 15 sekunder. Tjek din internetforbindelse, eller at Database URL er korrekt.')), 15000));
+    await Promise.race([
+      (async ()=>{
+        gangName = await loadKey('gangname', 'MIN BANDE'); gangInput.value = gangName;
+        recipes = await loadKey('recipes', []);
+        heists = await loadKey('heists', []);
+        meetings = await loadKey('meetings', []);
+        drugs = await loadKey('drugs', []);
+        materials = await loadKey('materials', DEFAULT_MATERIALS.slice());
+        availability = await loadKey('availability', []);
+        launders = await loadKey('launders', []);
+        treasury = await loadKey('treasury', []);
+        blackmarket = await loadKey('blackmarket', []);
+        webhooks = await loadKey('webhooks', {});
+      })(),
+      timeout
+    ]);
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard();
+    updateCountPill('overblik');
+    loadingEl.classList.add('bh-hidden');
+  }catch(err){
+    loadingEl.classList.add('bh-hidden');
+    document.getElementById('bh-root').innerHTML = `
+      <div class="bh-body">
+        <div class="bh-empty" style="text-align:left;padding:24px;">
+          <h3>Kunne ikke forbinde til Firebase</h3>
+          <p style="margin-bottom:10px;">Tjek at FIREBASE_DB_URL er korrekt, og at Database-reglerne ("Rules") tillader læsning og skrivning.</p>
+          <p style="font-family:var(--mono);font-size:12px;background:#0d1218;padding:10px;border-radius:8px;overflow-wrap:break-word;">${escapeHtml(String(err && err.message || err))}</p>
+          <button class="bh-btn bh-btn-primary" id="bh-retry-init" style="margin-top:12px;">Prøv igen</button>
+        </div>
+      </div>`;
+    document.getElementById('bh-retry-init').addEventListener('click', ()=> location.reload());
+    console.error(err);
+  }
+}
+
+// ---------- LÅS (adgangskode) ----------
+const ACCESS_CODE = 'Racoons1234';
+const LOCK_STORAGE_KEY = 'bh-unlocked';
+
+function unlockApp(){
+  document.getElementById('bh-lock').classList.add('bh-hidden');
+  document.getElementById('bh-loading').classList.remove('bh-hidden');
+  init();
+}
+
+(function initLock(){
+  if(localStorage.getItem(LOCK_STORAGE_KEY) === '1'){
+    unlockApp();
+    return;
+  }
+  const input = document.getElementById('bh-lock-input');
+  const submit = document.getElementById('bh-lock-submit');
+  const errorEl = document.getElementById('bh-lock-error');
+  const box = document.querySelector('.bh-lock-box');
+
+  function attempt(){
+    if(input.value === ACCESS_CODE){
+      localStorage.setItem(LOCK_STORAGE_KEY, '1');
+      unlockApp();
+    } else {
+      errorEl.textContent = 'Forkert kode — prøv igen.';
+      box.classList.remove('bh-shake'); void box.offsetWidth; box.classList.add('bh-shake');
+      input.value = '';
+      input.focus();
+    }
+  }
+  submit.addEventListener('click', attempt);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') attempt(); });
+  input.focus();
+})();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bande HQ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inconsolata:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#10151b;
+    --panel:#161d25;
+    --panel-raised:#1c242e;
+    --line:#263140;
+    --text:#e7edf3;
+    --text-dim:#8ea0b3;
+    --text-faint:#57677a;
+    --amber:#f2a93b;
+    --green:#35d68a;
+    --red:#e5555f;
+    --blue:#4f9eea;
+    --purple:#b98af2;
+    --mono:'Inconsolata', ui-monospace, 'SF Mono', monospace;
+    --disp:'Space Grotesk', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
   html{scrollbar-color: var(--line) var(--bg);}
   ::-webkit-scrollbar{width:10px;height:10px;}
   ::-webkit-scrollbar-track{background:var(--bg);}
