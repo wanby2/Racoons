@@ -352,6 +352,9 @@
 
       <div class="bh-section-title">Seneste aktivitet</div>
       <div id="ov-activity"></div>
+
+      <div class="bh-section-title">Aktivitetslog <span class="bh-count-pill" id="log-count" style="margin-left:auto;"></span></div>
+      <div id="ov-log"></div>
     </div>
 
     <!-- CRAFTING -->
@@ -415,6 +418,9 @@
           <div class="bh-field"><label>Navn</label><input type="text" id="dg-name" placeholder="F.eks. Kokain"></div>
           <div class="bh-field"><label>Antal på lager</label><input type="number" id="dg-stock" value="0" min="0"></div>
         </div>
+        <div class="bh-form-row bh-2col">
+          <div class="bh-field"><label>Lav-lager grænse (advarsel under dette)</label><input type="number" id="dg-minstock" value="10" min="0"></div>
+        </div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost" id="dg-cancel" type="button" style="display:none;">Annullér redigering</button>
           <button class="bh-btn bh-btn-primary" id="dg-save" type="button">Tilføj stof</button>
@@ -447,6 +453,11 @@
       <div class="bh-form-panel" style="text-align:center;">
         <div style="font-size:11px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Nuværende saldo</div>
         <div id="bk-balance" style="font-family:var(--mono);font-size:32px;font-weight:600;color:var(--green);"></div>
+      </div>
+
+      <div class="bh-section-title">Saldo over tid</div>
+      <div class="bh-form-panel">
+        <div id="bk-chart"></div>
       </div>
 
       <div class="bh-section-title">Registrer transaktion</div>
@@ -515,6 +526,12 @@
           <div class="bh-form-actions" style="margin-top:14px;"><button class="bh-btn bh-btn-primary" id="wh-save" type="button">Gem webhooks</button></div>
         </div>
         <div id="wh-status"></div>
+
+        <div class="bh-section-title">Backup</div>
+        <div class="bh-form-panel">
+          <p class="bh-card-meta" style="margin-bottom:12px;">Download alt bandens data (opskrifter, stoffer, heists, møder, bandekasse, hvidvask, blackmarket, materialer, medlemmer-tilgængelighed, aktivitetslog) som én JSON-fil — en uafhængig sikkerhedskopi, hvis noget skulle gå galt med Firebase.</p>
+          <button class="bh-btn bh-btn-primary" id="admin-backup" type="button">Download backup (JSON)</button>
+        </div>
       </div>
     </div>
 
@@ -616,6 +633,37 @@ function debounce(fn, wait){
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
 }
+
+// ---------- AKTIVITETSLOG ----------
+let activityLog = [];
+
+async function logActivity(icon, text){
+  activityLog.unshift({ id:uid(), icon, text, date:new Date().toISOString() });
+  if(activityLog.length > 100) activityLog = activityLog.slice(0, 100);
+  await saveKey('activitylog', activityLog);
+  renderActivityLog();
+}
+
+function renderActivityLog(){
+  const wrap = document.getElementById('ov-log');
+  const countEl = document.getElementById('log-count');
+  if(!wrap) return;
+  if(countEl) countEl.textContent = activityLog.length;
+  if(activityLog.length === 0){
+    wrap.innerHTML = '<div class="bh-empty"><h3>Ingen aktivitet endnu</h3><p>Handlinger i appen dukker op her, efterhånden som de sker.</p></div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="bh-form-panel">` + activityLog.slice(0, 40).map(e=>{
+    const d = new Date(e.date);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="bh-ov-item">
+      <div class="bh-ov-icon" style="--ov-color:var(--text-faint);">${e.icon}</div>
+      <div class="bh-ov-body"><p class="bh-ov-title" style="font-weight:500;">${escapeHtml(e.text)}</p></div>
+      <div class="bh-ov-date">${dateStr}</div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
 
 // ===================== Firebase Realtime Database backend =====================
 // Sæt din Firebase "Database URL" ind her (slutter typisk på firebaseio.com
@@ -877,6 +925,7 @@ document.getElementById('rc-save').addEventListener('click', async ()=>{
     if(n && q > 0) ingredients.push({name:n, qty:q});
   });
   if(ingredients.length === 0){ alert('Tilføj mindst én ingrediens.'); return; }
+  const wasEditing = !!editingRecipeId;
   if(editingRecipeId){
     const r = recipes.find(x=>x.id===editingRecipeId);
     if(r){ r.name = name; r.output = output; r.ingredients = ingredients; }
@@ -886,6 +935,7 @@ document.getElementById('rc-save').addEventListener('click', async ()=>{
   await saveKey('recipes', recipes);
   resetRecipeForm();
   renderRecipes();
+  logActivity('⚙️', wasEditing ? `Opskrift redigeret: ${name}` : `Ny opskrift: ${name}`);
 });
 
 function renderRecipeSelect(){
@@ -1030,7 +1080,7 @@ document.getElementById('cl-calc').addEventListener('click', ()=>{
 let editingDrugId = null;
 function resetDrugForm(){
   editingDrugId = null;
-  document.getElementById('dg-name').value=''; document.getElementById('dg-stock').value='0';
+  document.getElementById('dg-name').value=''; document.getElementById('dg-stock').value='0'; document.getElementById('dg-minstock').value='10';
   document.getElementById('dg-save').textContent = 'Tilføj stof';
   document.getElementById('dg-cancel').style.display = 'none';
 }
@@ -1042,6 +1092,7 @@ function startEditDrug(id){
   editingDrugId = id;
   document.getElementById('dg-name').value = d.name;
   document.getElementById('dg-stock').value = d.stock || 0;
+  document.getElementById('dg-minstock').value = d.minStock != null ? d.minStock : 10;
   document.getElementById('dg-save').textContent = 'Opdatér stof';
   document.getElementById('dg-cancel').style.display = 'inline-flex';
   document.getElementById('dg-name').scrollIntoView({behavior:'smooth', block:'center'});
@@ -1050,12 +1101,13 @@ function startEditDrug(id){
 document.getElementById('dg-save').addEventListener('click', async ()=>{
   const name = document.getElementById('dg-name').value.trim();
   const stock = parseInt(document.getElementById('dg-stock').value) || 0;
+  const minStock = parseInt(document.getElementById('dg-minstock').value) || 0;
   if(!name){ alert('Giv stoffet et navn.'); return; }
   if(editingDrugId){
     const d = drugs.find(x=>x.id===editingDrugId);
-    if(d){ d.name = name; d.stock = stock; }
+    if(d){ d.name = name; d.stock = stock; d.minStock = minStock; }
   } else {
-    drugs.push({id:uid(), name, stock, takenLog:[]});
+    drugs.push({id:uid(), name, stock, minStock, takenLog:[]});
   }
   await saveKey('drugs', drugs);
   resetDrugForm();
@@ -1071,11 +1123,16 @@ function renderDrugs(){
     const takenLog = d.takenLog || [];
     const taken = takenLog.reduce((s,e)=> s + e.amount, 0);
     const recentLog = [...takenLog].sort((a,b)=> b.date.localeCompare(a.date)).slice(0,5);
-    return `<div class="bh-card" style="--stripe:var(--purple);">
-      <p class="bh-card-name">${escapeHtml(d.name)}</p>
+    const minStock = d.minStock != null ? d.minStock : 10;
+    const isLow = stock <= minStock;
+    return `<div class="bh-card" style="--stripe:${isLow ? 'var(--red)' : 'var(--purple)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <p class="bh-card-name">${escapeHtml(d.name)}</p>
+        ${isLow ? '<span class="bh-badge bh-badge-red">⚠️ Lavt lager</span>' : ''}
+      </div>
       <p class="bh-card-meta">Taget i alt: ${taken}</p>
 
-      <div class="bh-field" style="margin-top:10px;"><label>Antal på lager</label>
+      <div class="bh-field" style="margin-top:10px;"><label>Antal på lager${isLow ? ` (grænse: ${minStock})` : ''}</label>
         <input type="number" class="stock-input" data-id="${d.id}" min="0" step="1" value="${stock}">
       </div>
 
@@ -1123,6 +1180,7 @@ drugList.addEventListener('click', async (e)=>{
       renderDrugs(); renderDashboard();
       const newTotal = d.takenLog.reduce((s,e2)=> s + e2.amount, 0);
       sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal}) — lager: ${d.stock} tilbage`, 0xb98af2);
+      logActivity('💊', `${who} tog ${amount} ${d.name}`);
     }
     return;
   }
@@ -1166,6 +1224,7 @@ document.getElementById('lw-calc').addEventListener('click', async ()=>{
   renderLaunderHistory();
   renderDashboard();
   sendWebhook('hvidvask', '💵 Hvidvask', `${fmtKr(amount)} kr vasket (${percent}% gebyr) → **${fmtKr(clean)} kr** retur${note ? `\n${note}` : ''}`, 0x35d68a);
+  logActivity('💵', `Vasket ${fmtKr(amount)} kr → ${fmtKr(clean)} kr`);
 });
 
 function renderLaunderHistory(){
@@ -1247,6 +1306,23 @@ document.getElementById('admin-code-input').addEventListener('keydown', e=>{
   if(e.key === 'Enter') document.getElementById('admin-code-submit').click();
 });
 
+document.getElementById('admin-backup').addEventListener('click', ()=>{
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    gangName, recipes, drugs, heists, meetings, materials, availability,
+    launders, treasury, blackmarket, activityLog,
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bande-hq-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
 // Fire-and-forget: sends a Discord embed to the configured webhook for a category.
 // Never blocks or throws into the caller — a failed notification should not stop the app.
 async function sendWebhook(category, title, description, color, extra){
@@ -1293,7 +1369,55 @@ document.getElementById('bk-save').addEventListener('click', async ()=>{
   renderTreasury(); renderDashboard();
   const isDeposit = type !== 'udtag';
   sendWebhook('bandekasse', '🏦 Bandekasse', `${isDeposit ? '➕ Indsat' : '➖ Taget ud'}: **${fmtKr(amount)} kr**\n${reason}${who ? `\n— ${who}` : ''}\nNy saldo: ${fmtKr(treasuryBalance())} kr`, isDeposit ? 0x35d68a : 0xe5555f);
+  logActivity('🏦', `${isDeposit ? '+' : '−'}${fmtKr(amount)} kr — ${reason}${who ? ' ('+who+')' : ''}`);
 });
+
+function renderTreasuryChart(){
+  const wrap = document.getElementById('bk-chart');
+  if(treasury.length === 0){
+    wrap.innerHTML = '<p class="bh-card-meta" style="text-align:center;">Ingen data endnu — grafen dukker op, når I har registreret transaktioner.</p>';
+    return;
+  }
+  const sorted = [...treasury].sort((a,b)=> a.date.localeCompare(b.date));
+  let running = 0;
+  const points = sorted.map(t=>{
+    running += (t.type === 'udtag' ? -t.amount : t.amount);
+    return { ts: t.date, balance: running };
+  });
+  points.unshift({ ts: points[0].ts, balance: 0 });
+
+  const W = 600, H = 160, PAD = 8;
+  const minY = Math.min(0, ...points.map(p=>p.balance));
+  const maxY = Math.max(0, ...points.map(p=>p.balance));
+  const rangeY = (maxY - minY) || 1;
+  const xStep = points.length > 1 ? (W - PAD*2) / (points.length - 1) : 0;
+  const yFor = v => H - PAD - ((v - minY) / rangeY) * (H - PAD*2);
+  const xFor = i => PAD + i * xStep;
+
+  const linePath = points.map((p,i)=> `${i===0?'M':'L'} ${xFor(i).toFixed(1)} ${yFor(p.balance).toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L ${xFor(points.length-1).toFixed(1)} ${yFor(0).toFixed(1)} L ${xFor(0).toFixed(1)} ${yFor(0).toFixed(1)} Z`;
+  const zeroY = yFor(0).toFixed(1);
+  const isPositive = points[points.length-1].balance >= 0;
+  const lineColor = isPositive ? '#35d68a' : '#e5555f';
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:160px;overflow:visible;">
+      <defs>
+        <linearGradient id="bk-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line x1="${PAD}" y1="${zeroY}" x2="${W-PAD}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+      <path d="${areaPath}" fill="url(#bk-grad)" stroke="none"/>
+      <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${points.map((p,i)=> i===0 ? '' : `<circle cx="${xFor(i).toFixed(1)}" cy="${yFor(p.balance).toFixed(1)}" r="2.5" fill="${lineColor}"/>`).join('')}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:2px;">
+      <span>${sorted[0].date.slice(0,10)}</span>
+      <span>${sorted[sorted.length-1].date.slice(0,10)}</span>
+    </div>`;
+}
 
 function renderTreasury(){
   document.getElementById('bk-count').textContent = treasury.length;
@@ -1301,6 +1425,7 @@ function renderTreasury(){
   const balEl = document.getElementById('bk-balance');
   balEl.textContent = `${fmtKr(balance)} kr`;
   balEl.style.color = balance < 0 ? 'var(--red)' : 'var(--green)';
+  renderTreasuryChart();
 
   const wrap = document.getElementById('bk-history');
   if(treasury.length === 0){ wrap.innerHTML = '<div class="bh-empty"><h3>Ingen transaktioner endnu</h3><p>Registrer et indskud eller udtag ovenfor.</p></div>'; return; }
@@ -1358,6 +1483,7 @@ document.getElementById('bm-save').addEventListener('click', async ()=>{
   const note = document.getElementById('bm-note').value.trim();
   if(!name){ alert('Giv itemet et navn.'); return; }
   if(isNaN(price) || price < 0){ alert('Skriv en gyldig pris.'); return; }
+  const wasEditingBm = !!editingBmId;
   if(editingBmId){
     const item = blackmarket.find(x=>x.id===editingBmId);
     if(item){ item.name = name; item.price = price; item.note = note; }
@@ -1368,6 +1494,7 @@ document.getElementById('bm-save').addEventListener('click', async ()=>{
   resetBmForm();
   renderBlackmarket();
   renderDashboard();
+  logActivity('🕶️', wasEditingBm ? `Blackmarket-item redigeret: ${name}` : `Nyt blackmarket-item: ${name}`);
 });
 
 function renderBlackmarket(){
@@ -1657,7 +1784,19 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
   document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
   renderHeists(); renderCalendar(); renderDashboard();
   sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
+  logActivity('🎯', `Nyt heist: ${name}${date ? ' ('+date+')' : ''}`);
 });
+
+function renderLootSplit(h){
+  const names = (h.crew || '').split(',').map(s=>s.trim()).filter(Boolean);
+  if(names.length === 0){
+    return `<p class="bh-ov-meta" style="margin-top:6px;">Tilføj besætning ovenfor for at fordele udbyttet.</p>`;
+  }
+  const each = h.lootAmount / names.length;
+  return `<div class="bh-form-panel" style="margin-top:8px;padding:12px;">
+    ${names.map(n=>`<div class="bh-total-row"><span>${escapeHtml(n)}</span><span class="qty">${fmtDA(Math.floor(each))} kr</span></div>`).join('')}
+  </div>`;
+}
 
 function renderHeists(){
   const list = document.getElementById('heist-list');
@@ -1685,6 +1824,15 @@ function renderHeists(){
           <option value="aflyst" ${status==='aflyst'?'selected':''}>Aflyst</option>
         </select>
       </div>
+
+      <div class="bh-field" style="margin-top:8px;"><label>Byttedeling — samlet udbytte (kr)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="loot-input" data-hid="${h.id}" min="0" step="1" placeholder="F.eks. 60000" value="${h.lootAmount || ''}" style="flex:1;">
+          <button class="bh-btn bh-btn-ghost bh-btn-sm loot-split" data-hid="${h.id}" type="button">Fordel</button>
+        </div>
+        ${h.lootAmount ? renderLootSplit(h) : ''}
+      </div>
+
       <div class="bh-card-actions"><button class="bh-btn bh-btn-danger bh-btn-sm hs-delete" data-hid="${h.id}">Slet</button></div>
     </div>`;
   }).join('');
@@ -1702,11 +1850,26 @@ function renderHeists(){
       if(h){ h.status = sel.value; await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard();
         const statusIcon = { planlagt:'📅', 'gennemført':'✅', aflyst:'❌' }[h.status] || '📅';
         sendWebhook('heist', `${statusIcon} Heist opdateret`, `**${h.name}** er nu markeret som **${h.status}**`, h.status==='gennemført' ? 0x35d68a : h.status==='aflyst' ? 0xe5555f : 0x4f9eea);
+        logActivity('🎯', `${h.name} markeret som ${h.status}`);
       }
     });
   });
   list.querySelectorAll('.hs-delete').forEach(btn=>{
     btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); });
+  });
+  list.querySelectorAll('.loot-split').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const input = list.querySelector(`.loot-input[data-hid="${btn.dataset.hid}"]`);
+      const amount = parseFloat(input.value);
+      if(!amount || amount <= 0){ alert('Skriv et gyldigt beløb.'); return; }
+      const h = heists.find(x=>x.id===btn.dataset.hid);
+      if(!h) return;
+      if(!(h.crew || '').trim()){ alert('Tilføj besætning til heistet først (feltet ovenfor "Nødvendige items" da heistet blev oprettet), så der er nogen at fordele til.'); return; }
+      h.lootAmount = amount;
+      await saveKey('heists', heists);
+      renderHeists();
+      logActivity('🎯', `Bytte fordelt for ${h.name}: ${fmtDA(amount)} kr`);
+    });
   });
 }
 
@@ -1725,6 +1888,7 @@ document.getElementById('mt-save').addEventListener('click', async ()=>{
   renderMeetings();
   renderDashboard();
   sendWebhook('meetings', '📋 Nyt møde', `**${title}**\n📅 ${date}${time ? ' · ' + time : ''}${agenda ? `\n${agenda}` : ''}${attendees ? `\n👥 ${attendees}` : ''}`, 0xb98af2);
+  logActivity('📋', `Nyt møde: ${title} (${date})`);
 });
 function renderMeetings(){
   const list = document.getElementById('meeting-list');
@@ -1777,10 +1941,11 @@ async function init(){
         treasury = await loadKey('treasury', []);
         blackmarket = await loadKey('blackmarket', []);
         webhooks = await loadKey('webhooks', {});
+        activityLog = await loadKey('activitylog', []);
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard();
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard(); renderActivityLog();
     updateCountPill('overblik');
     loadingEl.classList.add('bh-hidden');
   }catch(err){
