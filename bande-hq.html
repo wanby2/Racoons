@@ -1044,7 +1044,7 @@ function renderDrugs(){
 
       <div class="bh-form-row bh-2col" style="margin-top:8px;">
         <div class="bh-field"><label>Hvem</label><input type="text" class="taken-who" data-id="${d.id}" placeholder="F.eks. Snake"></div>
-        <div class="bh-field"><label>Antal taget</label><input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20"></div>
+        <div class="bh-field"><label>Antal taget (trækkes fra lager)</label><input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20"></div>
       </div>
       <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button" style="margin-top:6px;">Tilføj</button>
       ${recentLog.length ? `<div style="margin-top:8px;">${recentLog.map(e=>`<div class="bh-ov-meta" style="padding:2px 0;">${escapeHtml(e.who || 'Ukendt')} — ${e.amount} stk</div>`).join('')}</div>` : ''}
@@ -1075,12 +1075,17 @@ drugList.addEventListener('click', async (e)=>{
     if(!amount || amount <= 0){ alert('Skriv et gyldigt antal.'); return; }
     const d = drugs.find(x=>x.id===takenBtn.dataset.id);
     if(d){
+      const currentStock = d.stock || 0;
+      if(amount > currentStock){
+        if(!confirm(`Der er kun ${currentStock} stk på lager. Vil du alligevel tage ${amount}? Lageret sættes til 0.`)) return;
+      }
+      d.stock = Math.max(0, currentStock - amount);
       if(!d.takenLog) d.takenLog = [];
       d.takenLog.push({ who, amount, date:new Date().toISOString() });
       await saveKey('drugs', drugs);
       renderDrugs(); renderDashboard();
       const newTotal = d.takenLog.reduce((s,e2)=> s + e2.amount, 0);
-      sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal})`, 0xb98af2);
+      sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal}) — lager: ${d.stock} tilbage`, 0xb98af2);
     }
     return;
   }
