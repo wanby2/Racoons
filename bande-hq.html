@@ -2,8 +2,20 @@
 <html lang="da">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Bande HQ</title>
+<meta name="theme-color" content="#10151b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bande HQ">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f2a93b'/%3E%3Ctext x='50' y='62' font-family='monospace' font-weight='700' font-size='30' text-anchor='middle' fill='%231a1206'%3EBHQ%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f2a93b'/%3E%3Ctext x='50' y='62' font-family='monospace' font-weight='700' font-size='30' text-anchor='middle' fill='%231a1206'%3EBHQ%3C/text%3E%3C/svg%3E">
+<!-- Bemærk om "Installér app": disse tags giver en fin "Føj til hjemmeskærm"-oplevelse
+     på iOS/Safari (fuldskærm, eget ikon, ingen adressebjælke) uden videre opsætning.
+     En reel "Installér"-prompt i Chrome/Android kræver derimod et rigtigt manifest.json
+     + service worker hostet over https — ikke muligt for en lokal fil, kun hvis I lægger
+     filen op på fx GitHub Pages eller lignende. -->
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inconsolata:wght@400;500;600&display=swap');
 
@@ -23,6 +35,24 @@
     --mono:'Inconsolata', ui-monospace, 'SF Mono', monospace;
     --disp:'Space Grotesk', system-ui, sans-serif;
   }
+  html[data-theme="light"]{
+    --bg:#f3f1ea;
+    --panel:#ffffff;
+    --panel-raised:#f9f7f0;
+    --line:#e0dccc;
+    --text:#211d17;
+    --text-dim:#6b6355;
+    --text-faint:#a39c88;
+    --amber:#c9861a;
+    --green:#1f9d63;
+    --red:#c73a44;
+    --blue:#2f74c4;
+    --purple:#8b5fc7;
+  }
+  html[data-theme="light"] body::before, html[data-theme="light"] body::after{ opacity:0; }
+  html[data-theme="light"] .bh-brand-mark{ color:#fff; }
+  html[data-theme="light"] .bh-tab.active{ color:#fff; }
+  html[data-theme="light"] #bh-loading, html[data-theme="light"] #bh-lock{ background:var(--bg); }
   *{box-sizing:border-box;}
   html{scrollbar-color: var(--line) var(--bg); scroll-behavior:smooth;}
   body{-webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
@@ -105,6 +135,48 @@
   .bh-tab:active{transform:scale(0.96);}
 
   .bh-count-pill{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--line);padding:5px 10px;border-radius:20px;background:var(--panel);white-space:nowrap;}
+
+  .bh-global-search-wrap{position:relative;}
+  #bh-global-search{
+    background:var(--panel);border:1px solid var(--line);color:var(--text);
+    padding:8px 12px;border-radius:20px;font-size:12.5px;outline:none;width:180px;
+    transition:border-color .16s ease, width .2s ease;
+  }
+  #bh-global-search:focus{border-color:var(--amber);width:230px;}
+  #bh-global-results{
+    position:absolute;top:calc(100% + 6px);right:0;width:320px;max-height:360px;overflow-y:auto;
+    background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 20px 40px -14px rgba(0,0,0,0.8);z-index:60;display:none;
+  }
+  #bh-global-results.bh-show{display:block;}
+  .bh-gs-group-label{font-family:var(--mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;padding:8px 12px 4px;}
+  .bh-gs-item{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;font-size:12.5px;}
+  .bh-gs-item:hover{background:rgba(255,255,255,0.04);}
+  .bh-gs-empty{padding:16px;text-align:center;color:var(--text-dim);font-size:12px;}
+
+  .bh-topbar-actions{display:flex;gap:6px;}
+  .bh-icon-btn{
+    width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+    color:var(--text-dim);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:border-color .16s ease, color .16s ease, transform .1s ease;
+  }
+  .bh-icon-btn:hover{border-color:var(--amber);color:var(--text);}
+  .bh-icon-btn:active{transform:scale(0.94);}
+  .bh-icon-btn.bh-active{border-color:var(--amber);color:var(--amber);background:rgba(242,169,59,0.1);}
+
+  #bh-toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+  .bh-toast{
+    background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 16px 34px -14px rgba(0,0,0,0.8);
+    animation:bh-toast-in .22s ease;font-size:12.5px;
+  }
+  @keyframes bh-toast-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .bh-toast-text{color:var(--text);}
+
+  .bh-offline-banner{
+    margin:8px 24px 0;padding:9px 14px;border-radius:8px;font-size:12px;
+    background:rgba(242,169,59,0.1);border:1px solid rgba(242,169,59,0.3);color:var(--amber);
+  }
   .bh-shared-note{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);padding:8px 24px 0;display:flex;align-items:center;gap:6px;}
   .bh-shared-note .dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;box-shadow:0 0 0 0 rgba(53,214,138,0.6);animation:bh-pulse 2.2s infinite;}
   @keyframes bh-pulse{
@@ -342,8 +414,17 @@
       <button class="bh-tab" data-tab="admin">🔐 Admin</button>
     </div>
     <div class="bh-count-pill" id="bh-count-pill">—</div>
+    <div class="bh-topbar-actions">
+      <button class="bh-icon-btn" id="bh-notif-toggle" type="button" title="Slå browser-notifikationer til/fra">🔕</button>
+      <button class="bh-icon-btn" id="bh-theme-toggle" type="button" title="Skift mellem mørkt og lyst tema">🌙</button>
+    </div>
+    <div class="bh-global-search-wrap">
+      <input type="text" id="bh-global-search" placeholder="🔎 Søg i alt...">
+      <div id="bh-global-results"></div>
+    </div>
   </div>
   <div class="bh-shared-note"><span class="dot"></span>Data deles med alle der åbner dette dokument.</div>
+  <div class="bh-offline-banner" id="bh-offline-banner" style="display:none;">⚠️ Kunne ikke forbinde til Firebase — viser sidst kendte data fra denne browser. Ændringer gemmes muligvis ikke, før forbindelsen er tilbage.</div>
 
   <div class="bh-dash" id="bh-dash"></div>
 
@@ -477,7 +558,7 @@
           <div class="bh-field"><label>Beløb</label><input type="number" id="bk-amount" min="0" step="1" placeholder="F.eks. 15000"></div>
         </div>
         <div class="bh-form-row bh-2col">
-          <div class="bh-field"><label>Hvem</label><input type="text" id="bk-who" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Hvem</label><input type="text" id="bk-who" list="known-names" placeholder="F.eks. Snake"></div>
           <div class="bh-field"><label>Begrundelse</label><input type="text" id="bk-reason" placeholder="F.eks. Køb af udstyr til heist"></div>
         </div>
         <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="bk-save" type="button">Registrer</button></div>
@@ -495,6 +576,14 @@
           <div class="bh-field"><label>Item</label><input type="text" id="bm-name" placeholder="F.eks. Silencer"></div>
           <div class="bh-field"><label>Pris</label><input type="number" id="bm-price" min="0" step="1" placeholder="F.eks. 12000"></div>
         </div>
+        <div class="bh-field"><label>Valuta</label>
+          <select id="bm-currency">
+            <option value="Kr.">Kr.</option>
+            <option value="Trojan Coin">Trojan Coin</option>
+            <option value="Scripts">Scripts</option>
+            <option value="GG">GG</option>
+          </select>
+        </div>
         <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="bm-note" placeholder="F.eks. Kontakt Rex"></div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost" id="bm-cancel" type="button" style="display:none;">Annullér redigering</button>
@@ -503,7 +592,16 @@
       </div>
 
       <div class="bh-section-title">Blackmarket <span class="bh-count-pill" id="bm-count" style="margin-left:auto;"></span></div>
-      <div class="bh-field" style="margin-bottom:10px;"><input type="text" id="bm-search" placeholder="Søg efter item..."></div>
+      <div class="bh-form-row bh-2col" style="margin-bottom:10px;">
+        <input type="text" id="bm-search" placeholder="Søg efter item...">
+        <select id="bm-currency-filter">
+          <option value="">Alle valutaer</option>
+          <option value="Kr.">Kr.</option>
+          <option value="Trojan Coin">Trojan Coin</option>
+          <option value="Scripts">Scripts</option>
+          <option value="GG">GG</option>
+        </select>
+      </div>
       <div id="bm-list" class="bh-grid"></div>
     </div>
 
@@ -544,6 +642,10 @@
           <button class="bh-btn bh-btn-danger" id="admin-clear-log" type="button">Ryd aktivitetslog</button>
           <span id="admin-clear-log-status" style="margin-left:10px;font-size:12px;color:var(--green);"></span>
         </div>
+
+        <div class="bh-section-title">Papirkurv <span class="bh-count-pill" id="trash-count" style="margin-left:auto;"></span></div>
+        <p class="bh-card-meta" style="margin-bottom:10px;">Slettede opskrifter, stoffer, heists, møder og blackmarket-items ligger her i 24 timer, så en fejlklikke kan gøres om.</p>
+        <div id="admin-trash"></div>
       </div>
     </div>
 
@@ -563,7 +665,7 @@
       <div class="bh-section-title">Tilgængelighed — hvornår kan folk?</div>
       <div class="bh-form-panel">
         <div class="bh-form-row">
-          <div class="bh-field"><label>Navn</label><input type="text" id="av-name" placeholder="F.eks. Snake"></div>
+          <div class="bh-field"><label>Navn</label><input type="text" id="av-name" list="known-names" placeholder="F.eks. Snake"></div>
           <div class="bh-field"><label>Dato</label><input type="date" id="av-date"></div>
         </div>
         <div class="bh-form-row bh-2col">
@@ -587,7 +689,7 @@
         </div>
         <div id="hs-suggest-result"></div>
         <div class="bh-form-row bh-2col">
-          <div class="bh-field"><label>Besætning (valgfri)</label><input type="text" id="hs-crew" placeholder="F.eks. Snake, Rex, Vixen"></div>
+          <div class="bh-field"><label>Besætning (valgfri)</label><input type="text" id="hs-crew" list="known-names" placeholder="F.eks. Snake, Rex, Vixen"></div>
           <div class="bh-field"><label>Status</label>
             <select id="hs-status">
               <option value="planlagt">Planlagt</option>
@@ -595,6 +697,13 @@
               <option value="aflyst">Aflyst</option>
             </select>
           </div>
+        </div>
+        <div class="bh-field"><label>Gentagelse (kræver dato)</label>
+          <select id="hs-repeat">
+            <option value="none">Ingen — kun denne ene gang</option>
+            <option value="weekly">Ugentligt (8 uger frem)</option>
+            <option value="biweekly">Hver 2. uge (8 gange frem)</option>
+          </select>
         </div>
         <div class="bh-field"><label>Nødvendige items</label><div id="hs-items"></div></div>
         <div class="bh-form-actions">
@@ -627,7 +736,10 @@
 </div>
 
 <datalist id="materials-list"></datalist>
+<datalist id="known-names"></datalist>
 <datalist id="components-list"></datalist>
+
+<div id="bh-toast-wrap"></div>
 
 <script>
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -645,6 +757,226 @@ function debounce(fn, wait){
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
 }
+
+// ---------- PAPIRKURV (fortryd-sletning) ----------
+let trash = [];
+const TRASH_TTL_MS = 24 * 60 * 60 * 1000; // 24 timer
+
+function purgeExpiredTrash(){
+  const now = Date.now();
+  const before = trash.length;
+  trash = trash.filter(t => (now - new Date(t.deletedAt).getTime()) < TRASH_TTL_MS);
+  return trash.length !== before;
+}
+
+function showToast(text, onUndo){
+  const wrap = document.getElementById('bh-toast-wrap');
+  const toast = document.createElement('div');
+  toast.className = 'bh-toast';
+  toast.innerHTML = `<span class="bh-toast-text">${escapeHtml(text)}</span><button class="bh-btn bh-btn-ghost bh-btn-sm">Fortryd</button>`;
+  toast.querySelector('button').addEventListener('click', async ()=>{
+    toast.remove();
+    await onUndo();
+  });
+  wrap.appendChild(toast);
+  setTimeout(()=>{ if(toast.parentNode) toast.remove(); }, 8000);
+}
+
+// Moves an item to the trash instead of deleting it outright, shows an undo toast,
+// and keeps it restorable from Admin → Papirkurv for 24 hours.
+async function softDelete(type, item, label, restoreFn){
+  trash.unshift({ id:uid(), type, data:item, deletedAt:new Date().toISOString() });
+  await saveKey('trash', trash);
+  renderTrash();
+  showToast(`Slettet: ${label}`, async ()=>{
+    trash = trash.filter(t => t.data.id !== item.id || t.type !== type);
+    await saveKey('trash', trash);
+    renderTrash();
+    await restoreFn(item);
+  });
+}
+
+async function restoreFromTrash(trashId){
+  const entry = trash.find(t=>t.id===trashId);
+  if(!entry) return;
+  const restorers = {
+    recipe: async (item)=>{ recipes.push(item); await saveKey('recipes', recipes); renderRecipes(); },
+    drug: async (item)=>{ drugs.push(item); await saveKey('drugs', drugs); renderDrugs(); },
+    heist: async (item)=>{ heists.push(item); await saveKey('heists', heists); renderHeists(); renderCalendar(); },
+    meeting: async (item)=>{ meetings.push(item); await saveKey('meetings', meetings); renderMeetings(); },
+    blackmarket: async (item)=>{ blackmarket.push(item); await saveKey('blackmarket', blackmarket); renderBlackmarket(); },
+  };
+  const fn = restorers[entry.type];
+  if(fn) await fn(entry.data);
+  trash = trash.filter(t=>t.id !== trashId);
+  await saveKey('trash', trash);
+  renderTrash();
+  renderDashboard();
+}
+
+function renderTrash(){
+  const wrap = document.getElementById('admin-trash');
+  const countEl = document.getElementById('trash-count');
+  if(!wrap) return;
+  purgeExpiredTrash();
+  if(countEl) countEl.textContent = trash.length;
+  if(trash.length === 0){
+    wrap.innerHTML = '<div class="bh-empty"><h3>Papirkurven er tom</h3><p>Slettede opskrifter, stoffer, heists, møder og blackmarket-items dukker op her i 24 timer.</p></div>';
+    return;
+  }
+  const typeLabels = { recipe:'Opskrift', drug:'Bande-stof', heist:'Heist', meeting:'Møde', blackmarket:'Blackmarket' };
+  wrap.innerHTML = trash.map(t=>{
+    const name = t.data.name || t.data.title || 'Unavngivet';
+    const ageMs = Date.now() - new Date(t.deletedAt).getTime();
+    const hoursLeft = Math.max(0, Math.ceil((TRASH_TTL_MS - ageMs) / 3600000));
+    return `<div class="bh-ov-item">
+      <div class="bh-ov-icon" style="--ov-color:var(--red);">🗑️</div>
+      <div class="bh-ov-body"><p class="bh-ov-title">${escapeHtml(name)}</p><p class="bh-ov-meta">${typeLabels[t.type] || t.type} · udløber om ${hoursLeft} t</p></div>
+      <button class="bh-btn bh-btn-ghost bh-btn-sm" data-restore="${t.id}">Gendan</button>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('button[data-restore]').forEach(btn=>{
+    btn.addEventListener('click', ()=> restoreFromTrash(btn.dataset.restore));
+  });
+}
+
+// ---------- GLOBAL SØGNING ----------
+function runGlobalSearch(query){
+  const q = query.trim().toLowerCase();
+  if(q.length < 2) return null;
+  const groups = [];
+
+  const recipeHits = recipes.filter(r => r.name.toLowerCase().includes(q));
+  if(recipeHits.length) groups.push({ label:'Opskrifter', tab:'crafting', icon:'⚙️', items: recipeHits.map(r=>r.name) });
+
+  const drugHits = drugs.filter(d => d.name.toLowerCase().includes(q));
+  if(drugHits.length) groups.push({ label:'Bande stoffer', tab:'stoffer', icon:'💊', items: drugHits.map(d=>d.name) });
+
+  const bmHits = blackmarket.filter(i => i.name.toLowerCase().includes(q));
+  if(bmHits.length) groups.push({ label:'Blackmarket', tab:'blackmarket', icon:'🕶️', items: bmHits.map(i=>i.name) });
+
+  const heistHits = heists.filter(h => h.name.toLowerCase().includes(q) || (h.crew||'').toLowerCase().includes(q));
+  if(heistHits.length) groups.push({ label:'Heists', tab:'heist', icon:'🎯', items: heistHits.map(h=>`${h.name}${h.date ? ' · ' + h.date : ''}`) });
+
+  const meetingHits = meetings.filter(m => m.title.toLowerCase().includes(q));
+  if(meetingHits.length) groups.push({ label:'Møder', tab:'meetings', icon:'📋', items: meetingHits.map(m=>`${m.title} · ${m.date}`) });
+
+  return groups;
+}
+
+function renderGlobalSearch(query){
+  const resultsEl = document.getElementById('bh-global-results');
+  const groups = runGlobalSearch(query);
+  if(groups === null){ resultsEl.classList.remove('bh-show'); resultsEl.innerHTML = ''; return; }
+  if(groups.length === 0){
+    resultsEl.innerHTML = '<div class="bh-gs-empty">Ingen resultater</div>';
+    resultsEl.classList.add('bh-show');
+    return;
+  }
+  resultsEl.innerHTML = groups.map(g=>`
+    <div class="bh-gs-group-label">${g.label}</div>
+    ${g.items.slice(0,6).map(name=>`<div class="bh-gs-item" data-tab="${g.tab}"><span>${g.icon}</span><span>${escapeHtml(name)}</span></div>`).join('')}
+  `).join('');
+  resultsEl.classList.add('bh-show');
+  resultsEl.querySelectorAll('.bh-gs-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const tabBtn = document.querySelector(`.bh-tab[data-tab="${el.dataset.tab}"]`);
+      if(tabBtn) tabBtn.click();
+      document.getElementById('bh-global-search').value = '';
+      resultsEl.classList.remove('bh-show');
+    });
+  });
+}
+
+document.getElementById('bh-global-search').addEventListener('input', debounce(e=>{
+  renderGlobalSearch(e.target.value);
+}, 120));
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.bh-global-search-wrap')){
+    document.getElementById('bh-global-results').classList.remove('bh-show');
+  }
+});
+
+// ---------- KENDTE NAVNE (autocomplete på "hvem"-felter) ----------
+let knownNames = [];
+
+function renderKnownNames(){
+  document.getElementById('known-names').innerHTML = knownNames.map(n=>`<option value="${escapeAttr(n)}">`).join('');
+}
+
+// Call whenever a name is entered anywhere (single name, or comma-separated list
+// like a crew field) — adds any new names to the shared suggestion list.
+async function rememberNames(raw){
+  if(!raw) return;
+  const names = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  let changed = false;
+  names.forEach(n=>{
+    if(!knownNames.some(existing => existing.toLowerCase() === n.toLowerCase())){
+      knownNames.push(n);
+      changed = true;
+    }
+  });
+  if(changed){
+    knownNames.sort((a,b)=> a.localeCompare(b));
+    await saveKey('knownnames', knownNames);
+    renderKnownNames();
+  }
+}
+
+// ---------- BROWSER-NOTIFIKATIONER ----------
+function updateNotifButton(){
+  const btn = document.getElementById('bh-notif-toggle');
+  const enabled = safeStorageGet('bh-notif-enabled') === '1' && typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  btn.textContent = enabled ? '🔔' : '🔕';
+  btn.classList.toggle('bh-active', enabled);
+}
+
+document.getElementById('bh-notif-toggle').addEventListener('click', async ()=>{
+  if(typeof Notification === 'undefined'){
+    alert('Denne browser understøtter ikke browser-notifikationer.');
+    return;
+  }
+  const currentlyEnabled = safeStorageGet('bh-notif-enabled') === '1' && Notification.permission === 'granted';
+  if(currentlyEnabled){
+    safeStorageSet('bh-notif-enabled', '0');
+    updateNotifButton();
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted'){
+    safeStorageSet('bh-notif-enabled', '1');
+    new Notification('Bande HQ', { body:'Notifikationer er nu slået til.' });
+  } else {
+    alert('Notifikationer blev ikke tilladt af browseren.');
+  }
+  updateNotifButton();
+});
+
+// Fires a local browser notification if the person has opted in. Independent of
+// Discord webhooks — this only shows up on this device while a tab is open.
+function sendBrowserNotification(title, body){
+  if(typeof Notification === 'undefined') return;
+  if(safeStorageGet('bh-notif-enabled') !== '1') return;
+  if(Notification.permission !== 'granted') return;
+  try{ new Notification(title, { body }); }catch(e){ /* ignore */ }
+}
+
+// ---------- LYST/MØRKT TEMA ----------
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('bh-theme-toggle').textContent = theme === 'light' ? '☀️' : '🌙';
+}
+document.getElementById('bh-theme-toggle').addEventListener('click', ()=>{
+  const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  safeStorageSet('bh-theme', next);
+});
+(function initTheme(){
+  const saved = safeStorageGet('bh-theme');
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+})();
+updateNotifButton();
 
 // ---------- AKTIVITETSLOG ----------
 let activityLog = [];
@@ -695,14 +1027,31 @@ async function safeJson(res, context){
   catch(e){ throw new Error(`Uventet svar fra Firebase ved "${context}" (ikke gyldig JSON).`); }
 }
 
+// ---------- LOKAL CACHE (offline-fallback) ----------
+// Every successful Firebase read is also cached in localStorage. If Firebase can't
+// be reached, we fall back to that cache instead of failing outright — the app
+// still shows the last known data (read-only in spirit; saves are best-effort).
+let offlineMode = false;
+function cacheKey(key){ return 'bh-cache-' + key; }
+
 async function loadKey(key, fallback){
   try{
     const res = await fetch(firebaseUrl(key));
     const value = await safeJson(res, 'hent ' + key);
-    return value === null ? fallback : value;
-  }catch(e){ console.error('Firebase fejl (load)', key, e); return fallback; }
+    const result = value === null ? fallback : value;
+    safeStorageSet(cacheKey(key), JSON.stringify(result));
+    return result;
+  }catch(e){
+    console.error('Firebase fejl (load)', key, e);
+    const cached = safeStorageGet(cacheKey(key));
+    if(cached !== null){
+      try{ offlineMode = true; return JSON.parse(cached); }catch(parseErr){ /* fall through */ }
+    }
+    return fallback;
+  }
 }
 async function saveKey(key, value){
+  safeStorageSet(cacheKey(key), JSON.stringify(value));
   try{
     const res = await fetch(firebaseUrl(key), {
       method:'PUT',
@@ -710,7 +1059,7 @@ async function saveKey(key, value){
       body: JSON.stringify(value)
     });
     await safeJson(res, 'gem ' + key);
-  }catch(e){ console.error('Firebase fejl (gem)', key, e); alert('Kunne ikke gemme til Firebase. Tjek din forbindelse eller Database-regler.'); }
+  }catch(e){ console.error('Firebase fejl (gem)', key, e); alert('Kunne ikke gemme til Firebase. Ændringen er kun gemt lokalt i denne browser og deles ikke med resten af banden, før forbindelsen er tilbage.'); }
 }
 
 const DEFAULT_MATERIALS = ["Råt kød","Tekstil","Klude","Sterile pakke","Bandage","Plaster","Ispose","Plastik","Tørret Hash","Metalisk skrot","Fjederstål","Batteripakke","Elektronisk skrot","Ledningsrulle","Gummi","Skruer","Hærdet stål","Forstærket stål","Smørremiddel base","Opløsningsmiddel","Kredsløb","Loddepakke","Refineret jern","Skruer & bolte","Smådele","Controller","Modstand","Kondensator","Krudt","Højladet krudt","Træ","Kulfiber","Ballistisk stof","Hacking-modul","Antenne-modul","Aluminiumplade"];
@@ -937,6 +1286,11 @@ document.getElementById('rc-save').addEventListener('click', async ()=>{
     if(n && q > 0) ingredients.push({name:n, qty:q});
   });
   if(ingredients.length === 0){ alert('Tilføj mindst én ingrediens.'); return; }
+  const cyclePath = wouldCreateCycle(name, ingredients, editingRecipeId);
+  if(cyclePath){
+    alert(`Kan ikke gemme "${name}" — det skaber en cirkulær reference:\n\n${cyclePath.join(' → ')} → ${name}\n\nRet ingredienserne, så opskriften ikke ender med at kræve sig selv.`);
+    return;
+  }
   const wasEditing = !!editingRecipeId;
   if(editingRecipeId){
     const r = recipes.find(x=>x.id===editingRecipeId);
@@ -1021,11 +1375,13 @@ document.getElementById('recipe-list').addEventListener('click', async (e)=>{
   if(editBtn){ startEditRecipe(editBtn.dataset.edit); return; }
   const delBtn = e.target.closest('button[data-id]');
   if(delBtn){
+    const removed = recipes.find(r=>r.id===delBtn.dataset.id);
     recipes = recipes.filter(r=>r.id !== delBtn.dataset.id);
     craftlist = craftlist.filter(c=>c.recipeId !== delBtn.dataset.id);
     await saveKey('recipes', recipes);
     if(editingRecipeId === delBtn.dataset.id) resetRecipeForm();
     renderRecipes(); renderCraftlist();
+    if(removed) softDelete('recipe', removed, removed.name, async (item)=>{ recipes.push(item); await saveKey('recipes', recipes); renderRecipes(); });
   }
 });
 
@@ -1069,6 +1425,35 @@ function renderCraftlist(){
 function findRecipeByName(name){
   const n = name.trim().toLowerCase();
   return recipes.find(r => r.name.trim().toLowerCase() === n);
+}
+
+// Checks whether saving `name` with `ingredients` would create a circular chain
+// (e.g. Mk2 → Slæde → Mk2). `excludeId` is the recipe being edited, if any — its
+// old ingredient list is ignored in favour of the proposed new one.
+function wouldCreateCycle(name, ingredients, excludeId){
+  const startLower = name.trim().toLowerCase();
+
+  function ingredientsFor(nameLower){
+    if(nameLower === startLower) return ingredients;
+    const r = recipes.find(x => x.name.trim().toLowerCase() === nameLower && x.id !== excludeId);
+    return r ? r.ingredients : null;
+  }
+
+  function dfs(currentLower, path){
+    const ings = ingredientsFor(currentLower);
+    if(!ings) return null;
+    for(const ing of ings){
+      const subLower = ing.name.trim().toLowerCase();
+      if(subLower === startLower) return [...path, ing.name];
+      const subExists = recipes.some(r => r.name.trim().toLowerCase() === subLower && r.id !== excludeId);
+      if(!subExists) continue; // raw material, not a recipe reference
+      if(path.some(p => p.toLowerCase() === subLower)) continue; // pre-existing unrelated cycle — not our concern here
+      const result = dfs(subLower, [...path, ing.name]);
+      if(result) return result;
+    }
+    return null;
+  }
+  return dfs(startLower, [name]);
 }
 
 // Recursively expands an ingredient into raw materials by following sub-recipes
@@ -1189,7 +1574,7 @@ function renderDrugs(){
       </div>
 
       <div class="bh-form-row bh-2col" style="margin-top:8px;">
-        <div class="bh-field"><label>Hvem</label><input type="text" class="taken-who" data-id="${d.id}" placeholder="F.eks. Snake"></div>
+        <div class="bh-field"><label>Hvem</label><input type="text" class="taken-who" data-id="${d.id}" list="known-names" placeholder="F.eks. Snake"></div>
         <div class="bh-field"><label>Antal taget (trækkes fra lager)</label><input type="number" class="taken-input" data-id="${d.id}" min="0" step="1" placeholder="F.eks. 20"></div>
       </div>
       <button class="bh-btn bh-btn-ghost bh-btn-sm taken-add" data-id="${d.id}" type="button" style="margin-top:6px;">Tilføj</button>
@@ -1229,10 +1614,15 @@ drugList.addEventListener('click', async (e)=>{
       if(!d.takenLog) d.takenLog = [];
       d.takenLog.push({ who, amount, date:new Date().toISOString() });
       await saveKey('drugs', drugs);
+      rememberNames(who);
       renderDrugs(); renderDashboard();
       const newTotal = d.takenLog.reduce((s,e2)=> s + e2.amount, 0);
       sendWebhook('stoffer', '💊 Produktion', `**${d.name}**: +${amount} taget af **${who}** (i alt: ${newTotal}) — lager: ${d.stock} tilbage`, 0xb98af2);
       logActivity('💊', `${who} tog ${amount} ${d.name}`);
+      const minStock = d.minStock != null ? d.minStock : 10;
+      if(d.stock <= minStock){
+        sendBrowserNotification('⚠️ Lavt lager', `${d.name}: kun ${d.stock} tilbage (grænse: ${minStock})`);
+      }
     }
     return;
   }
@@ -1240,10 +1630,12 @@ drugList.addEventListener('click', async (e)=>{
   if(editBtn){ startEditDrug(editBtn.dataset.edit); return; }
   const delBtn = e.target.closest('button[data-del]');
   if(delBtn){
+    const removed = drugs.find(d=>d.id===delBtn.dataset.del);
     drugs = drugs.filter(d=>d.id !== delBtn.dataset.del);
     await saveKey('drugs', drugs);
     if(editingDrugId === delBtn.dataset.del) resetDrugForm();
     renderDrugs();
+    if(removed) softDelete('drug', removed, removed.name, async (item)=>{ drugs.push(item); await saveKey('drugs', drugs); renderDrugs(); });
   }
 });
 
@@ -1435,6 +1827,7 @@ document.getElementById('bk-save').addEventListener('click', async ()=>{
   }
   treasury.push({id:uid(), type, amount, who, reason, date:new Date().toISOString()});
   await saveKey('treasury', treasury);
+  rememberNames(who);
   document.getElementById('bk-amount').value=''; document.getElementById('bk-who').value=''; document.getElementById('bk-reason').value=''; document.getElementById('bk-type').value='indsæt';
   renderTreasury(); renderDashboard();
   const isDeposit = type !== 'udtag';
@@ -1529,7 +1922,7 @@ let editingBmId = null;
 
 function resetBmForm(){
   editingBmId = null;
-  document.getElementById('bm-name').value=''; document.getElementById('bm-price').value=''; document.getElementById('bm-note').value='';
+  document.getElementById('bm-name').value=''; document.getElementById('bm-price').value=''; document.getElementById('bm-note').value=''; document.getElementById('bm-currency').value='Kr.';
   document.getElementById('bm-save').textContent = 'Tilføj item';
   document.getElementById('bm-cancel').style.display = 'none';
 }
@@ -1542,6 +1935,7 @@ function startEditBm(id){
   document.getElementById('bm-name').value = item.name;
   document.getElementById('bm-price').value = item.price;
   document.getElementById('bm-note').value = item.note || '';
+  document.getElementById('bm-currency').value = item.currency || 'Kr.';
   document.getElementById('bm-save').textContent = 'Opdatér item';
   document.getElementById('bm-cancel').style.display = 'inline-flex';
   document.getElementById('bm-name').scrollIntoView({behavior:'smooth', block:'center'});
@@ -1551,14 +1945,15 @@ document.getElementById('bm-save').addEventListener('click', async ()=>{
   const name = document.getElementById('bm-name').value.trim();
   const price = parseFloat(document.getElementById('bm-price').value);
   const note = document.getElementById('bm-note').value.trim();
+  const currency = document.getElementById('bm-currency').value;
   if(!name){ alert('Giv itemet et navn.'); return; }
   if(isNaN(price) || price < 0){ alert('Skriv en gyldig pris.'); return; }
   const wasEditingBm = !!editingBmId;
   if(editingBmId){
     const item = blackmarket.find(x=>x.id===editingBmId);
-    if(item){ item.name = name; item.price = price; item.note = note; }
+    if(item){ item.name = name; item.price = price; item.note = note; item.currency = currency; }
   } else {
-    blackmarket.push({id:uid(), name, price, note});
+    blackmarket.push({id:uid(), name, price, note, currency});
   }
   await saveKey('blackmarket', blackmarket);
   resetBmForm();
@@ -1573,18 +1968,20 @@ function renderBlackmarket(){
   const fmt = fmtDA;
 
   const query = (document.getElementById('bm-search').value || '').trim().toLowerCase();
-  const filtered = query
+  const currencyFilter = document.getElementById('bm-currency-filter').value;
+  let filtered = query
     ? blackmarket.filter(i => i.name.toLowerCase().includes(query) || (i.note || '').toLowerCase().includes(query))
     : blackmarket;
+  if(currencyFilter) filtered = filtered.filter(i => (i.currency || 'Kr.') === currencyFilter);
 
   if(blackmarket.length === 0){ list.innerHTML = '<div class="bh-empty"><h3>Ingen items endnu</h3><p>Tilføj jeres første blackmarket-item ovenfor.</p></div>'; return; }
-  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen items matcher "${escapeHtml(query)}".</p></div>`; return; }
+  if(filtered.length === 0){ list.innerHTML = `<div class="bh-empty"><h3>Ingen match</h3><p>Ingen items matcher din søgning/filter.</p></div>`; return; }
 
   const sorted = [...filtered].sort((a,b)=> a.name.localeCompare(b.name));
   list.innerHTML = sorted.map(item=>`
     <div class="bh-card" style="--stripe:var(--red);">
       <p class="bh-card-name">${escapeHtml(item.name)}</p>
-      <p class="bh-card-meta">${fmt(item.price)} kr${item.note ? `<br>${escapeHtml(item.note)}` : ''}</p>
+      <p class="bh-card-meta">${fmt(item.price)} ${escapeHtml(item.currency || 'Kr.')}${item.note ? `<br>${escapeHtml(item.note)}` : ''}</p>
       <div class="bh-card-actions"><button class="bh-btn bh-btn-ghost bh-btn-sm" data-edit="${item.id}">Rediger</button><button class="bh-btn bh-btn-danger bh-btn-sm" data-id="${item.id}">Slet</button></div>
     </div>`).join('');
   staggerCards(list);
@@ -1593,15 +1990,18 @@ function renderBlackmarket(){
   });
   list.querySelectorAll('button[data-id]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
+      const removed = blackmarket.find(i=>i.id===btn.dataset.id);
       blackmarket = blackmarket.filter(i=>i.id !== btn.dataset.id);
       await saveKey('blackmarket', blackmarket);
       if(editingBmId === btn.dataset.id) resetBmForm();
       renderBlackmarket();
       renderDashboard();
+      if(removed) softDelete('blackmarket', removed, removed.name, async (item)=>{ blackmarket.push(item); await saveKey('blackmarket', blackmarket); renderBlackmarket(); });
     });
   });
 }
 document.getElementById('bm-search').addEventListener('input', debounce(renderBlackmarket, 150));
+document.getElementById('bm-currency-filter').addEventListener('change', renderBlackmarket);
 
 // ---------- HEIST-KALENDER ----------
 let calViewYear, calViewMonth, calSelectedDate = null;
@@ -1708,7 +2108,7 @@ function renderCalDayDetail(){
     ${avHtml}
 
     <div class="bh-form-row bh-2col" style="margin-top:12px;">
-      <div class="bh-field"><label>Dit navn</label><input type="text" id="rsvp-name" placeholder="F.eks. Snake"></div>
+      <div class="bh-field"><label>Dit navn</label><input type="text" id="rsvp-name" list="known-names" placeholder="F.eks. Snake"></div>
       <div class="bh-field"><label>Note (valgfri)</label><input type="text" id="rsvp-note" placeholder="F.eks. kun aften"></div>
     </div>
     <div class="bh-form-actions">
@@ -1733,6 +2133,7 @@ function renderCalDayDetail(){
     availability.push({id:uid(), name, date:calSelectedDate, from:'00:00', to:'23:59', note});
     availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
     await saveKey('availability', availability);
+    rememberNames(name);
     renderAvailability(); renderCalendar(); renderCalDayDetail();
   });
 
@@ -1777,6 +2178,7 @@ document.getElementById('av-save').addEventListener('click', async ()=>{
   availability.push({id:uid(), name, date, from, to, note});
   availability.sort((a,b)=> (a.date+a.from).localeCompare(b.date+b.from));
   await saveKey('availability', availability);
+  rememberNames(name);
   document.getElementById('av-name').value=''; document.getElementById('av-date').value='';
   document.getElementById('av-from').value=''; document.getElementById('av-to').value=''; document.getElementById('av-note').value='';
   renderAvailability();
@@ -1838,7 +2240,9 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
   const time = document.getElementById('hs-time').value;
   const crew = document.getElementById('hs-crew').value.trim();
   const status = document.getElementById('hs-status').value;
+  const repeat = document.getElementById('hs-repeat').value;
   if(!name){ alert('Giv heistet et navn.'); return; }
+  if(repeat !== 'none' && !date){ alert('Sæt en dato for at kunne gentage heistet.'); return; }
   const items = [];
   document.querySelectorAll('#hs-items .bh-item-row').forEach(row=>{
     const n = row.querySelector('.item-name').value.trim();
@@ -1847,14 +2251,39 @@ document.getElementById('hs-save').addEventListener('click', async ()=>{
     if(n) items.push({name:n, qty:q, gathered:g});
   });
   if(items.length === 0){ alert('Tilføj mindst ét item.'); return; }
-  heists.push({id:uid(), name, date, time, crew, status, items});
+
+  const cloneItems = () => items.map(it => ({...it, gathered:false}));
+  const occurrences = [];
+  if(repeat === 'none'){
+    occurrences.push({ date, items: cloneItems() });
+  } else {
+    const stepDays = repeat === 'weekly' ? 7 : 14;
+    const count = 8;
+    const base = new Date(date + 'T00:00:00');
+    for(let i=0; i<count; i++){
+      const d = new Date(base.getTime() + i*stepDays*24*60*60*1000);
+      occurrences.push({ date: d.toISOString().slice(0,10), items: cloneItems() });
+    }
+  }
+  const seriesId = occurrences.length > 1 ? uid() : null;
+  occurrences.forEach(occ=>{
+    heists.push({id:uid(), name, date:occ.date, time, crew, status: repeat==='none' ? status : 'planlagt', items:occ.items, seriesId});
+  });
   await saveKey('heists', heists);
-  document.getElementById('hs-name').value=''; document.getElementById('hs-date').value=''; document.getElementById('hs-time').value=''; document.getElementById('hs-crew').value=''; document.getElementById('hs-status').value='planlagt';
+  rememberNames(crew);
+  document.getElementById('hs-name').value=''; document.getElementById('hs-date').value=''; document.getElementById('hs-time').value=''; document.getElementById('hs-crew').value=''; document.getElementById('hs-status').value='planlagt'; document.getElementById('hs-repeat').value='none';
   document.getElementById('hs-suggest-result').innerHTML='';
   document.getElementById('hs-items').innerHTML=''; document.getElementById('hs-items').appendChild(makeItemRow());
   renderHeists(); renderCalendar(); renderDashboard();
-  sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
-  logActivity('🎯', `Nyt heist: ${name}${date ? ' ('+date+')' : ''}`);
+  if(occurrences.length > 1){
+    sendWebhook('heist', '🎯 Gentagne heists planlagt', `**${name}** er planlagt ${occurrences.length} gange, startende ${occurrences[0].date}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
+    sendBrowserNotification('🎯 Gentagne heists planlagt', `${name} — ${occurrences.length} gange fra ${occurrences[0].date}`);
+    logActivity('🎯', `${name} planlagt ${occurrences.length} gange (fra ${occurrences[0].date})`);
+  } else {
+    sendWebhook('heist', '🎯 Nyt heist planlagt', `**${name}**${date ? `\n📅 ${date}${time ? ' · ' + time : ''}` : '\nIngen dato sat endnu'}${crew ? `\n👥 Besætning: ${crew}` : ''}`, 0x4f9eea);
+    sendBrowserNotification('🎯 Nyt heist planlagt', `${name}${date ? ' — ' + date : ''}`);
+    logActivity('🎯', `Nyt heist: ${name}${date ? ' ('+date+')' : ''}`);
+  }
 });
 
 function renderLootSplit(h){
@@ -1925,7 +2354,12 @@ function renderHeists(){
     });
   });
   list.querySelectorAll('.hs-delete').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ heists = heists.filter(h=>h.id !== btn.dataset.hid); await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard(); });
+    btn.addEventListener('click', async ()=>{
+      const removed = heists.find(h=>h.id===btn.dataset.hid);
+      heists = heists.filter(h=>h.id !== btn.dataset.hid);
+      await saveKey('heists', heists); renderHeists(); renderCalendar(); renderDashboard();
+      if(removed) softDelete('heist', removed, removed.name, async (item)=>{ heists.push(item); await saveKey('heists', heists); renderHeists(); renderCalendar(); });
+    });
   });
   list.querySelectorAll('.loot-split').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
@@ -1958,6 +2392,7 @@ document.getElementById('mt-save').addEventListener('click', async ()=>{
   renderMeetings();
   renderDashboard();
   sendWebhook('meetings', '📋 Nyt møde', `**${title}**\n📅 ${date}${time ? ' · ' + time : ''}${agenda ? `\n${agenda}` : ''}${attendees ? `\n👥 ${attendees}` : ''}`, 0xb98af2);
+  sendBrowserNotification('📋 Nyt møde', `${title} — ${date}${time ? ' · ' + time : ''}`);
   logActivity('📋', `Nyt møde: ${title} (${date})`);
 });
 function renderMeetings(){
@@ -1976,7 +2411,12 @@ function renderMeetings(){
     </div>`).join('');
   staggerCards(list);
   list.querySelectorAll('button[data-id]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ meetings = meetings.filter(m=>m.id !== btn.dataset.id); await saveKey('meetings', meetings); renderMeetings(); renderDashboard(); });
+    btn.addEventListener('click', async ()=>{
+      const removed = meetings.find(m=>m.id===btn.dataset.id);
+      meetings = meetings.filter(m=>m.id !== btn.dataset.id);
+      await saveKey('meetings', meetings); renderMeetings(); renderDashboard();
+      if(removed) softDelete('meeting', removed, removed.title, async (item)=>{ meetings.push(item); await saveKey('meetings', meetings); renderMeetings(); });
+    });
   });
 }
 
@@ -2012,11 +2452,14 @@ async function init(){
         blackmarket = await loadKey('blackmarket', []);
         webhooks = await loadKey('webhooks', {});
         activityLog = await loadKey('activitylog', []);
+        knownNames = await loadKey('knownnames', []);
+        trash = await loadKey('trash', []);
       })(),
       timeout
     ]);
-    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard(); renderActivityLog();
+    renderRecipes(); renderHeists(); renderMeetings(); renderDrugs(); renderMaterials(); renderAvailability(); renderCalendar(); renderLaunderHistory(); renderTreasury(); renderBlackmarket(); renderWebhookFields(); renderDashboard(); renderActivityLog(); renderKnownNames(); renderTrash();
     updateCountPill('overblik');
+    if(offlineMode) document.getElementById('bh-offline-banner').style.display = 'block';
     loadingEl.classList.add('bh-hidden');
   }catch(err){
     loadingEl.classList.add('bh-hidden');
