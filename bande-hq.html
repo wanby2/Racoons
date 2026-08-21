@@ -217,6 +217,10 @@
   .bh-craftlist-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
   .bh-craftlist-row:first-of-type{border-top:none;}
 
+  .bh-subpart-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;}
+  .bh-subpart-row label{display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;color:var(--text);}
+  .bh-subpart-excluded{color:var(--text-faint);text-decoration:line-through;}
+
   .bh-total-row{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-size:13px;}
   .bh-total-row:first-of-type{border-top:none;}
   .bh-total-row .qty{font-family:var(--mono);color:var(--amber);font-weight:600;}
@@ -368,6 +372,7 @@
           </div>
           <div class="bh-field"><label>Ønsket antal (output)</label><input type="number" id="cl-qty" value="1" min="1"></div>
         </div>
+        <div id="cl-subparts"></div>
         <div class="bh-form-actions">
           <button class="bh-btn bh-btn-ghost bh-btn-sm" id="cl-add" type="button">+ Tilføj til liste</button>
         </div>
@@ -952,8 +957,34 @@ function renderRecipeSelect(){
   const filtered = query ? recipes.filter(r => r.name.toLowerCase().includes(query)) : recipes;
   select.innerHTML = filtered.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
   if(filtered.some(r=>r.id === prevValue)) select.value = prevValue;
+  renderClSubparts();
 }
 document.getElementById('cl-search').addEventListener('input', debounce(renderRecipeSelect, 150));
+document.getElementById('cl-recipe').addEventListener('change', renderClSubparts);
+
+// Shows a checklist of any ingredients on the selected recipe that are themselves
+// other recipes (sub-components) — unchecking one means "skip this part entirely,
+// I already have it" when the recipe is added to the craft-list.
+function renderClSubparts(){
+  const wrap = document.getElementById('cl-subparts');
+  const recipeId = document.getElementById('cl-recipe').value;
+  const recipe = recipes.find(r=>r.id===recipeId);
+  if(!recipe){ wrap.innerHTML = ''; return; }
+  const subIngredients = recipe.ingredients.filter(i => !!findRecipeByName(i.name));
+  if(subIngredients.length === 0){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="bh-form-panel" style="padding:12px 14px;margin-top:8px;margin-bottom:0;">
+    <div style="font-size:10.5px;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Fravælg dele du allerede har</div>
+    ${subIngredients.map(i=>`
+      <div class="bh-subpart-row">
+        <label><input type="checkbox" class="bh-chk cl-subpart-chk" data-name="${escapeAttr(i.name)}" checked><span>${escapeHtml(i.name)}</span></label>
+      </div>`).join('')}
+  </div>`;
+  wrap.querySelectorAll('.cl-subpart-chk').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      cb.closest('label').querySelector('span').classList.toggle('bh-subpart-excluded', !cb.checked);
+    });
+  });
+}
 
 function renderRecipes(){
   const list = document.getElementById('recipe-list');
@@ -1004,8 +1035,13 @@ document.getElementById('cl-add').addEventListener('click', ()=>{
   const qty = parseFloat(document.getElementById('cl-qty').value) || 0;
   const recipe = recipes.find(r=>r.id===id);
   if(!recipe || qty <= 0){ alert('Vælg en opskrift og et antal.'); return; }
-  craftlist.push({recipeId:id, qty});
+  const excluded = [];
+  document.querySelectorAll('.cl-subpart-chk').forEach(cb=>{
+    if(!cb.checked) excluded.push(cb.dataset.name);
+  });
+  craftlist.push({recipeId:id, qty, excluded});
   document.getElementById('cl-qty').value = 1;
+  renderClSubparts();
   renderCraftlist();
 });
 document.getElementById('cl-clear').addEventListener('click', ()=>{ craftlist = []; renderCraftlist(); document.getElementById('craftlist-total').innerHTML=''; });
@@ -1016,7 +1052,14 @@ function renderCraftlist(){
   wrap.innerHTML = craftlist.map((c,idx)=>{
     const r = recipes.find(x=>x.id===c.recipeId);
     if(!r) return '';
-    return `<div class="bh-craftlist-row"><span>${escapeHtml(r.name)}</span><span style="display:flex;align-items:center;gap:10px;"><span class="qty" style="font-family:var(--mono);color:var(--amber);">&times;${c.qty}</span><button class="bh-remove-x" data-idx="${idx}">&times;</button></span></div>`;
+    const excludedNote = (c.excluded && c.excluded.length) ? `<div style="font-size:11px;color:var(--text-faint);margin-top:2px;">Uden: ${c.excluded.map(escapeHtml).join(', ')}</div>` : '';
+    return `<div class="bh-craftlist-row" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span>${escapeHtml(r.name)}</span>
+        <span style="display:flex;align-items:center;gap:10px;"><span class="qty" style="font-family:var(--mono);color:var(--amber);">&times;${c.qty}</span><button class="bh-remove-x" data-idx="${idx}">&times;</button></span>
+      </div>
+      ${excludedNote}
+    </div>`;
   }).join('');
   wrap.querySelectorAll('button[data-idx]').forEach(btn=>{
     btn.addEventListener('click', ()=>{ craftlist.splice(parseInt(btn.dataset.idx),1); renderCraftlist(); });
@@ -1057,7 +1100,9 @@ document.getElementById('cl-calc').addEventListener('click', ()=>{
     if(!r) return;
     const batches = c.qty / r.output;
     const visited = new Set([r.id]);
+    const excluded = new Set(c.excluded || []);
     r.ingredients.forEach(ing=>{
+      if(excluded.has(ing.name)) return; // "already have this part" — skip entirely, don't count materials for it
       expandIngredient(ing.name, ing.qty * batches, totals, subcomponents, visited);
     });
   });
