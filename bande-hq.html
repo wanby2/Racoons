@@ -795,7 +795,7 @@
     <div class="bh-panel" id="panel-meetings" style="display:none;">
       <div class="bh-section-title">Send udmelding til Discord</div>
       <div class="bh-form-panel">
-        <p class="bh-card-meta" style="margin-bottom:12px;">Sender en besked direkte til Discord (kræver at "Informationer/møder"-webhooken er sat op under Admin). Du kan tagge alle, kun dem der er online, eller bestemte personer.</p>
+        <p class="bh-card-meta" style="margin-bottom:12px;">Sender en besked direkte til Discord (kræver at "Informationer/møder"-webhooken er sat op under Admin). Du kan tagge alle, kun dem der er online, en bestemt gruppe/rolle, eller enkeltpersoner.</p>
         <div class="bh-field"><label>Besked</label><textarea id="an-message" placeholder="F.eks. Vi mødes kl. 20 til briefing, alle skal have styr på deres udstyr inden da."></textarea></div>
         <div class="bh-form-row bh-2col">
           <div class="bh-field"><label>Tag</label>
@@ -803,12 +803,15 @@
               <option value="none">Ingen tagging</option>
               <option value="everyone">@everyone — tag alle</option>
               <option value="here">@here — tag dem der er online</option>
+              <option value="role">Gruppe/rolle (fx @Ledere, @Boosters)</option>
               <option value="custom">Bestemte personer (Discord bruger-ID'er)</option>
             </select>
           </div>
           <div class="bh-field" id="an-custom-wrap" style="display:none;"><label>Bruger-ID'er (kommasepareret)</label><input type="text" id="an-custom-ids" placeholder="F.eks. 123456789012345678, 987654321098765432"></div>
+          <div class="bh-field" id="an-role-wrap" style="display:none;"><label>Rolle-ID'er (kommasepareret)</label><input type="text" id="an-role-ids" placeholder="F.eks. 223344556677889900"></div>
         </div>
         <p class="bh-card-meta" id="an-custom-help" style="display:none;margin-top:-6px;">Find en persons ID i Discord: Slå Udvikler-tilstand til under Indstillinger → Avanceret, højreklik så på personen og vælg "Kopiér bruger-ID".</p>
+        <p class="bh-card-meta" id="an-role-help" style="display:none;margin-top:-6px;">Find en rolles ID: Slå Udvikler-tilstand til under Indstillinger → Avanceret, gå til Serverindstillinger → Roller, højreklik på rollen og vælg "Kopiér rolle-ID". Rollen skal desuden være sat til "@mentionable" i Discord, ellers kan webhooken ikke tagge den.</p>
         <div class="bh-form-actions"><button class="bh-btn bh-btn-primary" id="an-send" type="button">Send til Discord</button></div>
         <div id="an-status"></div>
       </div>
@@ -2763,15 +2766,18 @@ setInterval(checkHeistReminders, 60000);
 
 // ---------- DISCORD-UDMELDING (tagging) ----------
 document.getElementById('an-mention-type').addEventListener('change', (e)=>{
-  const showCustom = e.target.value === 'custom';
-  document.getElementById('an-custom-wrap').style.display = showCustom ? 'block' : 'none';
-  document.getElementById('an-custom-help').style.display = showCustom ? 'block' : 'none';
+  const val = e.target.value;
+  document.getElementById('an-custom-wrap').style.display = val === 'custom' ? 'block' : 'none';
+  document.getElementById('an-custom-help').style.display = val === 'custom' ? 'block' : 'none';
+  document.getElementById('an-role-wrap').style.display = val === 'role' ? 'block' : 'none';
+  document.getElementById('an-role-help').style.display = val === 'role' ? 'block' : 'none';
 });
 
 document.getElementById('an-send').addEventListener('click', async ()=>{
   const message = document.getElementById('an-message').value.trim();
   const mentionType = document.getElementById('an-mention-type').value;
   const customIds = document.getElementById('an-custom-ids').value.trim();
+  const roleIds = document.getElementById('an-role-ids').value.trim();
   const statusEl = document.getElementById('an-status');
   const url = webhooks.meetings;
 
@@ -2789,6 +2795,11 @@ document.getElementById('an-send').addEventListener('click', async ()=>{
   } else if(mentionType === 'here'){
     mentionPrefix = '@here ';
     allowedMentions = { parse: ['everyone'] }; // Discord requires "everyone" parse to notify @here too
+  } else if(mentionType === 'role'){
+    const ids = roleIds.split(',').map(s=>s.trim()).filter(Boolean);
+    if(ids.length === 0){ alert('Skriv mindst ét rolle-ID.'); return; }
+    mentionPrefix = ids.map(id=>`<@&${id}>`).join(' ') + ' ';
+    allowedMentions = { roles: ids };
   } else if(mentionType === 'custom'){
     const ids = customIds.split(',').map(s=>s.trim()).filter(Boolean);
     if(ids.length === 0){ alert('Skriv mindst ét Discord bruger-ID.'); return; }
